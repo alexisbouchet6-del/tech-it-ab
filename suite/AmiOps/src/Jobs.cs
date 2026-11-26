@@ -1,4 +1,4 @@
-// AMI·OPS - centre des tâches (exécution parallèle, file d'attente, annulation), scénarios enchaînés, autotest
+// Tech IT AB - centre des tâches (exécution parallèle, file d'attente, annulation), scénarios enchaînés, autotest
 // Développé by alex.b
 
 using System;
@@ -138,6 +138,7 @@ namespace AmiOps
     }
 
     // ===================================================================== Scénarios enchaînés
+#if !POSTE
     class Step { public string Name; public bool On = true; public Action<Job> Run; }
 
     static class Scenarios
@@ -242,7 +243,7 @@ namespace AmiOps
                 shell.BeginInvoke(new Action(() =>
                 {
                     var it = new Intervention { Id = Store.NewId(), ClientId = clientId ?? "", Date = DateTime.Today, Tech = Prefs.Ini.Get("Tech", ""), Type = name == "PC neuf" ? "Installation / mise en service" : name == "Problème réseau" ? "Réseau / Wi-Fi" : "Dépannage",
-                        Demande = "Scénario AMI·OPS « " + name + " »", Diag = diag, Actions = sb.ToString().TrimEnd(), Minutes = (int)Math.Max(1, (DateTime.Now - j.Started).TotalMinutes), Result = "Résolu" };
+                        Demande = "Scénario " + Ed.Name + " « " + name + " »", Diag = diag, Actions = sb.ToString().TrimEnd(), Minutes = (int)Math.Max(1, (DateTime.Now - j.Started).TotalMinutes), Result = "Résolu" };
                     Store.D.Interventions.Add(it); try { Store.Save(); } catch { }
                     shell.Notify("Scénario terminé", name + " : intervention préremplie créée (à vérifier et clôturer).");
                 }));
@@ -280,6 +281,8 @@ namespace AmiOps
     }
 
     // ===================================================================== Autotest (bouton ou --selftest en ligne de commande / CI)
+#endif
+
     static class SelfTest
     {
         public class R { public string Name, Status, Detail; public long Ms; }
@@ -303,10 +306,12 @@ namespace AmiOps
                 var back = Store.Json().Deserialize<Data>(File.ReadAllText(tmp, Encoding.UTF8)); File.Delete(tmp);
                 if (back.Clients[0].Name != "Test é") throw new Exception("relecture incorrecte"); return "JSON aller-retour OK";
             }));
+#if !POSTE
             add(T("Coffre : chiffrement AES + HMAC", () =>
             {
                 var c = Vault.CryptoSelfTest(); if (c != null) throw new Exception(c); return "chiffré, relu, altération détectée";
             }));
+#endif
             add(T("Wi-Fi : lecture d'une sortie netsh FR", () =>
             {
                 Ap cur; string err; var l2 = Wifi.Parse("SSID 1 : Box\r\n    Authentification : WPA2 - Personnel\r\n    BSSID 1 : aa:bb:cc:dd:ee:ff\r\n         Signal : 80%\r\n         Canal : 6\r\n", "    SSID : Box\r\n    Signal : 80%\r\n    Canal : 6\r\n", out cur, out err);
@@ -322,8 +327,11 @@ namespace AmiOps
             add(T("Écrans bleus : vidages + débogueur", () => Bsod.Dumps().Count + " vidage(s) · débogueur " + (Bsod.Cdb() != null ? "trouvé" : "absent")));
             add(T("Licence Windows", () => { var sb = new StringBuilder(); Repair.License((s, c) => sb.Append(c == "bad" ? "[!] " : "").Append(s.Split('\n')[0]).Append(" | ")); return sb.ToString().TrimEnd(' ', '|'); }));
             add(T("Imprimantes (WMI)", () => { int n = 0; using (var s = new System.Management.ManagementObjectSearcher("SELECT Name FROM Win32_Printer")) n = s.Get().Count; return n + " imprimante(s)"; }));
+#if !POSTE
             add(T("Secours : installations hors ligne", () => Rescue.Find().Count + " Windows hors ligne détecté(s)"));
+#endif
             add(T("DNS : MX de microsoft.com", () => { int rc; var r = MailCheck.Dns2.Query("microsoft.com", MailCheck.Dns2.MX, out rc); if (r.Count == 0) throw new Exception("aucune réponse (code " + rc + ")"); return r[0].Data; }));
+#if !POSTE
             add(T("Recette de livraison : mesures locales", () =>
             {
                 var loc = Recette.ParseLocal(Sh.Ps(Recette.Script, 180000));
@@ -337,6 +345,20 @@ namespace AmiOps
                 if (!Optim.SafetyScannerTrusted("Valid|CN=Microsoft Corporation, O=Microsoft Corporation|CN=Microsoft Root Certificate Authority 2011, O=Microsoft Corporation") || Optim.SafetyScannerTrusted("Valid|O=Microsoft Corporation|CN=Evil, O=Evil")) throw new Exception("règle Safety Scanner");
                 return "4 constats critiques détectés, règle de signature Microsoft OK";
             }));
+#endif
+#if !POSTE
+            add(T("Cyber : garde-fous et règles", () =>
+            {
+                if (Nmap.Profiles.Any(p => Nmap.CheckArgs(p.Args) != null) || Nmap.CheckArgs("--script exploit") == null) throw new Exception("garde-fou des scripts Nmap");
+                var c = new Client { Name = "test", CyberScope = "10.0.0.0/24", CyberAuth = DateTime.Now };
+                if (Scope.Check(c, Scope.Targets("10.0.0.5", n => new System.Net.IPAddress[0]), DateTime.Now) != null || Scope.Check(c, Scope.Targets("10.0.1.5", n => new System.Net.IPAddress[0]), DateTime.Now) == null) throw new Exception("contrôle du périmètre");
+                var f = Risk.Evaluate(Nmap.Parse("<nmaprun><host><status state=\"up\"/><address addr=\"10.0.0.5\" addrtype=\"ipv4\"/><ports><port protocol=\"tcp\" portid=\"23\"><state state=\"open\"/><service name=\"telnet\"/></port></ports></host></nmaprun>"), DateTime.Now);
+                if (!f.Any(x => x.Level == "bad")) throw new Exception("règle Telnet");
+                return "périmètre, scripts autorisés et règles OK · Nmap " + (Nmap.Version() ?? "absent");
+            }));
+            add(T("Cyber : chasse aux menaces (journaux)", () => { var o = Sh.Ps(Poste.HuntScript, 300000); if (!Poste.Complete(o, "H")) throw new Exception("script incomplet : " + o.Trim().Split('\n').LastOrDefault()); return Poste.EvalHunt(o).Count + " constat(s) sur 7 jours"; }));
+            add(T("Cyber : connexions", () => { var o = Sh.Ps(Poste.ConnScript, 120000); if (!Poste.Complete(o, "C")) throw new Exception("script incomplet"); int n; var f = Poste.EvalConn(o, out n); return n + " connexion(s) · " + f.Count + " constat(s)"; }));
+#endif
             add(T("Réseau : passerelle", () => { var g = ScanParc.Scanner.Gateway(); return g == null ? "N/A aucune passerelle" : g.ToString(); }));
             if (full)
             {
@@ -348,7 +370,7 @@ namespace AmiOps
 
         public static string Text(List<R> l)
         {
-            var sb = new StringBuilder("AUTOTEST AMI·OPS " + AppInfo.Version + " — " + Environment.MachineName + " — " + Report.WinVersion() + " — " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + "\r\n");
+            var sb = new StringBuilder("AUTOTEST " + Ed.Name + " " + AppInfo.Version + " — " + Environment.MachineName + " — " + Report.WinVersion() + " — " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + "\r\n");
             sb.AppendLine(l.Count(r => r.Status == "OK") + " OK · " + l.Count(r => r.Status == "KO") + " KO · " + l.Count(r => r.Status == "N/A") + " non applicables");
             foreach (var r in l) sb.AppendLine("[" + r.Status.PadRight(3) + "] " + r.Name.PadRight(42) + (r.Ms + " ms").PadLeft(9) + "  " + r.Detail);
             return sb.ToString();

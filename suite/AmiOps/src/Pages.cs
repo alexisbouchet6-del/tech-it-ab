@@ -1,4 +1,4 @@
-// AMI·OPS - accueil, clients, interventions, temps passé
+// Tech IT AB - accueil, clients, interventions, temps passé
 // Développé by alex.b
 
 using System;
@@ -660,7 +660,7 @@ namespace AmiOps
         {
             if (!File.Exists(QuickFile))
                 File.WriteAllText(QuickFile,
-                    "# AMI·OPS (by alex.b) - actions fréquentes, une par ligne\r\n" +
+                    "# " + Ed.Name + " (by alex.b) - actions fréquentes, une par ligne\r\n" +
                     "Diagnostic matériel et logiciel du poste (PanneScan)\r\nNettoyage des fichiers temporaires et du disque\r\nMises à jour Windows installées\r\nMise à jour des pilotes\r\n" +
                     "Analyse antivirus complète, aucune menace\r\nVérification de l'état des disques (SMART)\r\nRéparation du démarrage (bcdboot)\r\nAnnulation des mises à jour en attente (DISM)\r\n" +
                     "Réparation des fichiers système (DISM + SFC)\r\nSauvegarde des données utilisateur\r\nRestauration des données utilisateur\r\nInstallation et paramétrage de la messagerie\r\n" +

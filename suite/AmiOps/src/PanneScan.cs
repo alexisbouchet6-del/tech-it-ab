@@ -1,4 +1,4 @@
-// AMI·OPS - PanneScan : historique des pannes et verdict (BSOD, arrêts brutaux, disque, RAM, pilotes, chauffe, batterie)
+// Tech IT AB - PanneScan : historique des pannes et verdict (BSOD, arrêts brutaux, disque, RAM, pilotes, chauffe, batterie)
 // Développé by alex.b
 
 using System;
@@ -364,7 +364,7 @@ namespace AmiOps
             days.Items.AddRange(new object[] { "7 jours", "30 jours", "90 jours", "1 an" }); days.SelectedIndex = 1; Controls.Add(days);
             int x = days.Right + k(10);
             x = Btn("Copier le rapport", t => t.Accent2, x, k(36), (s, e) => { if (last != null) Clip.Text(last.Text() + "\r\n\r\n" + box.Text.Replace("\n", "\r\n")); }).Right + k(6);
-            x = Btn("＋ Intervention avec ce diagnostic", t => t.Accent, x, k(36), (s, e) => { if (last != null) Shell.NewIntervention(null, last.Text()); }).Right + k(6);
+            x = Btn(Ed.Full ? "＋ Intervention avec ce diagnostic" : "Enregistrer ce diagnostic", t => t.Accent, x, k(36), (s, e) => { if (last != null) Shell.NewIntervention(null, last.Text()); }).Right + k(6);
             Btn("Moniteur de fiabilité", t => t.Muted, x, k(36), (s, e) => { try { System.Diagnostics.Process.Start("perfmon.exe", "/rel"); } catch { } });
             verdict = new Card { Location = new Point(0, k(80)), Height = k(74), StatusOf = t => t.Muted, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             vTitle = new Label { Text = "PRÊT", AutoSize = true, Font = new Font("Consolas", 14f, FontStyle.Bold), Location = new Point(k(18), k(10)), Tag = "muted" };

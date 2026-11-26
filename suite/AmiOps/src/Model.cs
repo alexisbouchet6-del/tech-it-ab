@@ -1,4 +1,4 @@
-// AMI·OPS - données (clients, équipements, interventions), sauvegardes et coffre chiffré
+// Tech IT AB - données (clients, équipements, interventions), sauvegardes et coffre chiffré
 // Développé by alex.b
 
 using System;
@@ -11,13 +11,13 @@ using System.Text;
 using System.Web.Script.Serialization;
 using AlexB;
 
-[assembly: AssemblyTitle("AMI·OPS")]
-[assembly: AssemblyDescription("Console du technicien - clients, pannes, réseau, NAS, messagerie, secours")]
+[assembly: AssemblyTitle(AmiOps.Ed.Name)]
+[assembly: AssemblyDescription(AmiOps.Ed.Tagline)]
 [assembly: AssemblyCompany("alex.b")]
-[assembly: AssemblyProduct("AMI·OPS")]
+[assembly: AssemblyProduct(AmiOps.Ed.Name)]
 [assembly: AssemblyCopyright("by alex.b - 2026")]
-[assembly: AssemblyVersion("1.3.0.0")]
-[assembly: AssemblyFileVersion("1.3.0.0")]
+[assembly: AssemblyVersion(AmiOps.Ed.Version + ".0")]
+[assembly: AssemblyFileVersion(AmiOps.Ed.Version + ".0")]
 
 namespace AmiOps
 {
@@ -38,6 +38,8 @@ namespace AmiOps
         public List<Asset> Assets = new List<Asset>();
         public List<string> Domains = new List<string>();
         public int GlpiEntity;   // id de l'entité GLPI liée (0 = aucune)
+        public string CyberScope = "", CyberAuthRef = "";   // périmètre d'audit autorisé (IP, CIDR, plages) et référence du document
+        public DateTime CyberAuth;                           // date de l'autorisation écrite du client (MinValue = aucune)
     }
 
     public class Intervention
@@ -201,6 +203,7 @@ namespace AmiOps
     public class Secret { public string Id = "", ClientId = "", Label = "", User = "", Url = "", Notes = "", Cipher = ""; public DateTime Updated; }
     public class VaultFile { public string Salt = "", Check = ""; public int Iter = 300000; public List<Secret> Items = new List<Secret>(); }
 
+#if !POSTE
     static class Vault
     {
         static byte[] encKey, macKey;
@@ -323,4 +326,5 @@ namespace AmiOps
             return sb.ToString();
         }
     }
+#endif
 }

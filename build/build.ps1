@@ -1,5 +1,5 @@
 <#
-  Compilation Windows de la suite alex.b et d'AMI·OPS avec le compilateur Microsoft (Roslyn, Visual Studio Build Tools).
+  Compilation Windows de la suite alex.b, de Tech IT AB et de PC Santé AB avec le compilateur Microsoft (Roslyn, Visual Studio Build Tools).
   Développé by alex.b
   Usage : pwsh -File build/build.ps1            -> exe dans out/
 #>
@@ -15,21 +15,22 @@ if (-not $csc) { throw 'csc.exe (Roslyn) introuvable.' }
 Write-Host "Compilateur : $csc"
 
 $fw = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
-$refs = 'mscorlib', 'System', 'System.Core', 'System.Drawing', 'System.Windows.Forms', 'System.Management', 'System.Web.Extensions', 'System.Security' |
+$refs = 'mscorlib', 'System', 'System.Core', 'System.Drawing', 'System.Windows.Forms', 'System.Management', 'System.Web.Extensions', 'System.Security', 'System.Xml' |
     ForEach-Object { "/r:$(Join-Path $fw "$_.dll")" }
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 $obj = Join-Path $Out 'obj'; if (Test-Path $obj) { Remove-Item $obj -Recurse -Force }; New-Item -ItemType Directory -Path $obj | Out-Null
 
-function Invoke-Csc([string]$Name, [string]$Icon, [string[]]$Files, [string]$Main) {
+function Invoke-Csc([string]$Name, [string]$Icon, [string[]]$Files, [string]$Main, [string]$Define) {
     $a = @('/nologo', '/noconfig', '/nostdlib+', '/target:winexe', '/platform:anycpu', '/optimize+', '/langversion:7.3',
            '/codepage:65001', '/nowarn:649,414,169,219', "/win32icon:$Icon", "/out:$(Join-Path $Out "$Name.exe")") + $refs + $Files
     if ($Main) { $a += "/main:$Main" }
+    if ($Define) { $a += "/define:$Define" }
     & $csc @a
     if ($LASTEXITCODE -ne 0) { throw "Échec de compilation : $Name" }
     Write-Host "OK  $Name.exe"
 }
 
-# copie d'un fichier source sans ses attributs d'assembly (sources embarquées dans AMI·OPS)
+# copie d'un fichier source sans ses attributs d'assembly (sources embarquées dans Tech IT AB et PC Santé AB)
 function Copy-Stripped([string]$File, [string]$Prefix) {
     $dst = Join-Path $obj ("$Prefix" + '_' + (Split-Path $File -Leaf))
     $lines = Get-Content -LiteralPath $File -Encoding UTF8 | Where-Object { $_ -notmatch '^\[assembly:' }
@@ -50,14 +51,20 @@ Invoke-Csc 'NetSwitch' (Join-Path $legacy 'netswitch\build\netswitch.ico') (@($h
 Invoke-Csc 'Outils-VTx' (Join-Path $legacy 'outils-vtx\build\outils-vtx.ico') (@($harden) + (Get-ChildItem (Join-Path $legacy 'outils-vtx\src') -Filter *.cs).FullName)
 Invoke-Csc 'PowerMenu' (Join-Path $legacy 'powermenu\build\powermenu.ico') (@($harden) + (Get-ChildItem (Join-Path $legacy 'powermenu\src') -Filter *.cs).FullName)
 
-# 2. AMI·OPS (toutes les applis embarquées)
+# 2. Tech IT AB (tout) et PC Santé AB (symbole POSTE, liste blanche : aucun code sensible compilé)
 $emb = @()
 foreach ($a in $apps) { foreach ($f in (Get-ChildItem (Join-Path $suite "$a\src") -Filter *.cs)) { $emb += Copy-Stripped $f.FullName $a } }
 foreach ($d in 'netswitch', 'outils-vtx', 'powermenu') { foreach ($f in (Get-ChildItem (Join-Path $legacy "$d\src") -Filter *.cs)) { $emb += Copy-Stripped $f.FullName $d } }
 $emb += Copy-Stripped $harden 'legacy'
-Invoke-Csc 'AmiOps' (Join-Path $suite 'AmiOps\build\app.ico') (@($common) + (Get-ChildItem (Join-Path $suite 'AmiOps\src') -Filter *.cs).FullName + $emb) 'AmiOps.Program'
+$src = (Get-ChildItem (Join-Path $suite 'AmiOps\src') -Filter *.cs).FullName
+Invoke-Csc 'TechITAB' (Join-Path $suite 'AmiOps\build\techitab.ico') (@($common) + $src + $emb) 'AmiOps.Program'
+$excl = 'Pages.cs', 'Parc.cs', 'CyberPage.cs', 'Labo.cs', 'Remote.cs', 'Secours.cs'
+$posteSrc = $src | Where-Object { $excl -notcontains (Split-Path $_ -Leaf) }
+$posteEmb = $emb | Where-Object { (Split-Path $_ -Leaf) -match '^(DiagPoste|MaintenancePC|TestReseau|ScanParc|TriFichiers|MailCheck|netswitch|outils-vtx|powermenu|legacy)_' }
+Invoke-Csc 'PCSanteAB' (Join-Path $suite 'AmiOps\build\pcsante.ico') (@($common) + $posteSrc + $posteEmb) 'AmiOps.Program' 'POSTE'
 
-Copy-Item (Join-Path $Out 'AmiOps.exe') (Join-Path $Out 'AmiOps-portable.exe') -Force
+Copy-Item (Join-Path $Out 'TechITAB.exe') (Join-Path $Out 'TechITAB-portable.exe') -Force
+Copy-Item (Join-Path $Out 'PCSanteAB.exe') (Join-Path $Out 'PCSanteAB-portable.exe') -Force
 Remove-Item $obj -Recurse -Force
 Get-ChildItem $Out -Filter *.exe | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name } |
     Set-Content (Join-Path $Out 'SHA256SUMS.txt') -Encoding ascii

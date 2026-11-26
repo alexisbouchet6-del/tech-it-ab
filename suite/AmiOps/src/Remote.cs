@@ -1,4 +1,4 @@
-// AMI·OPS - plusieurs PC à la fois (WinRM), connecteurs GLPI et Tactical RMM, mise à jour automatique
+// Tech IT AB - plusieurs PC à la fois (WinRM), connecteurs GLPI et Tactical RMM, mise à jour automatique
 // Développé by alex.b
 
 using System;
@@ -370,7 +370,7 @@ namespace AmiOps
     // ===================================================================== Mise à jour automatique (versions publiées sur GitHub)
     static class Updater
     {
-        public static string Repo { get { return Prefs.Ini.Get("UpdateRepo", "alexisbouchet6-del/amiops"); } }
+        public static string Repo { get { return Prefs.Ini.Get("UpdateRepo", "alexisbouchet6-del/tech-it-ab"); } }
         // certificat de signature de code Amiprotek (kit glpi-amiprotek, signing/amiprotek-codesigning.cer)
         public const string AmiprotekThumb = "7C02F586B652E6C722E3523BD86170E5564B9D0A";
 
@@ -392,7 +392,7 @@ namespace AmiOps
             foreach (var a in Http.List(r.ContainsKey("assets") ? r["assets"] : null))
             {
                 var n = Http.S(a, "name");
-                if (n == "AmiOps-portable.exe") url = Http.S(a, "url");
+                if (n == Ed.Asset) url = Http.S(a, "url");
                 if (n == "SHA256SUMS.txt") sumsUrl = Http.S(a, "url");
             }
             return V(tag) > V(AppInfo.Version) ? tag : null;
@@ -408,10 +408,10 @@ namespace AmiOps
         // téléchargement → empreinte SHA-256 vérifiée → (signature vérifiée si une empreinte de certificat est épinglée) → remplacement au redémarrage
         public static void Apply(string url, string sumsUrl, string tag, Action<string, string> log)
         {
-            if (url == null || sumsUrl == null) throw new Exception("la version " + tag + " ne contient pas AmiOps-portable.exe + SHA256SUMS.txt");
+            if (url == null || sumsUrl == null) throw new Exception("la version " + tag + " ne contient pas " + Ed.Asset + " + SHA256SUMS.txt");
             var exe = Download(url); var sums = Encoding.UTF8.GetString(Download(sumsUrl));
             string hash; using (var sha = System.Security.Cryptography.SHA256.Create()) hash = BitConverter.ToString(sha.ComputeHash(exe)).Replace("-", "").ToLowerInvariant();
-            var m = Regex.Match(sums, @"([0-9a-fA-F]{64})\s+\*?AmiOps-portable\.exe");
+            var m = Regex.Match(sums, @"([0-9a-fA-F]{64})\s+\*?" + Regex.Escape(Ed.Asset));
             if (!m.Success || !m.Groups[1].Value.Equals(hash, StringComparison.OrdinalIgnoreCase)) throw new Exception("EMPREINTE SHA-256 INCORRECTE : mise à jour refusée");
             log("empreinte SHA-256 vérifiée : " + hash.Substring(0, 16) + "…", "ok");
             // dossier neuf réservé à SYSTEM + Administrateurs : un processus non élevé ne peut pas remplacer
@@ -431,7 +431,7 @@ namespace AmiOps
             // cmd.exe lit les .cmd dans la page de code OEM : chemins accentués (C:\Users\Amélie) corrects
             var oem = Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
             File.WriteAllText(cmd, "@echo off\r\n:w\r\ntasklist /fi \"PID eq " + pid + "\" | find \"" + pid + "\" >nul && (timeout /t 1 >nul & goto w)\r\ncopy /y \"" + target + "\" \"" + target + ".old\" >nul\r\ncopy /y \"" + tmp + "\" \"" + target + "\" >nul\r\nstart \"\" \"" + target + "\"\r\n(goto) 2>nul & rd /s /q \"" + dir + "\"\r\n", oem);
-            log("AMI·OPS va redémarrer en " + tag + " (ancienne version gardée en .old).", "ok");
+            log(Ed.Name + " va redémarrer en " + tag + " (ancienne version gardée en .old).", "ok");
             Process.Start(new ProcessStartInfo(Proc.Sys("cmd.exe"), "/c \"" + cmd + "\"") { WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true });
             TrayHost.Quitting = true; Application.Exit();
         }
@@ -442,13 +442,13 @@ namespace AmiOps
     {
         public override string Title { get { return "Connecteurs"; } }
 
-        public ConnectPage() : base("CONNECTEURS", "GLPI, Tactical RMM et mise à jour d'AMI·OPS. Jetons chiffrés DPAPI (ton compte Windows), https obligatoire.", 120)
+        public ConnectPage() : base("CONNECTEURS", "GLPI, Tactical RMM et mise à jour de " + Ed.Name + ". Jetons chiffrés DPAPI (ton compte Windows), https obligatoire.", 120)
         {
             T(Theme.Icon("", "⚙"), "Configurer GLPI", "URL + jetons", t => t.Accent, ConfGlpi, false);
             T(Theme.Icon("", "↻"), "Synchroniser GLPI", "entités → clients, PC → parc", t => t.Ok, () => { if (!Glpi.Configured) throw new Exception("GLPI non configuré"); Glpi.Sync(Out); });
             T(Theme.Icon("", "⚙"), "Configurer TRMM", "Tactical RMM : URL API + clé", t => t.Accent, ConfTrmm, false);
             T(Theme.Icon("", "▤"), "Agents Tactical RMM", "état, commande à distance", t => t.Ok, () => { if (!Trmm.Configured) throw new Exception("Tactical RMM non configuré"); var l = Trmm.Agents(); Ui(() => AgentsForm(l)); });
-            T(Theme.Icon("", "⇩"), "Mise à jour d'AMI·OPS", "versions GitHub", t => t.Accent2, CheckUpdate);
+            T(Theme.Icon("", "⇩"), "Mise à jour de " + Ed.Name, "versions GitHub", t => t.Accent2, CheckUpdate);
             T(Theme.Icon("", "⚙"), "Réglages MAJ", "dépôt, jeton, certificat", t => t.Muted, ConfUpdate, false);
             T(Theme.Icon("", "♥"), "Santé des serveurs", "HTTPS, certificats", t => t.Warn, () =>
             {
@@ -511,9 +511,9 @@ namespace AmiOps
         void CheckUpdate()
         {
             string url, sums, tag; var newer = Updater.Check(out url, out sums, out tag);
-            if (newer == null) { Out("AMI·OPS est à jour (" + AppInfo.Version + ", dernière publiée : " + (tag ?? "?") + ").", "ok"); return; }
+            if (newer == null) { Out(Ed.Name + " est à jour (" + AppInfo.Version + ", dernière publiée : " + (tag ?? "?") + ").", "ok"); return; }
             Out("Nouvelle version disponible : " + newer, "warn");
-            if (AskUi("Installer AMI·OPS " + newer + " maintenant ?\nL'appli va redémarrer (tâches en cours interrompues).")) Updater.Apply(url, sums, tag, Out);
+            if (AskUi("Installer " + Ed.Name + " " + newer + " maintenant ?\nL'appli va redémarrer (tâches en cours interrompues).")) Updater.Apply(url, sums, tag, Out);
         }
 
         void ConfUpdate()

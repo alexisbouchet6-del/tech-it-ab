@@ -1,4 +1,4 @@
-// AMI·OPS - réseau, messagerie, coffre, outils intégrés, paramètres
+// Tech IT AB - réseau, messagerie, coffre, outils intégrés, paramètres
 // Développé by alex.b
 
 using System;
@@ -41,6 +41,12 @@ namespace AmiOps
             grid.Location = new Point(0, k(114)); grid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             grid.DoubleClick += (s, e) => { var d = grid.Sel as ScanParc.Device; if (d != null) try { Process.Start(d.Ports.Contains(5001) ? "https://" + d.Ip + ":5001" : d.Ports.Contains(443) ? "https://" + d.Ip : "http://" + d.Ip); } catch { } };
             Controls.Add(bar); Controls.Add(grid);
+#if POSTE
+            // PC Santé AB : réseau local de ce PC uniquement, découverte des appareils sans test de ports ni lien client
+            deep.Checked = false; deep.Visible = false; range.ReadOnly = true; range.Text = def; client.Visible = false;
+            foreach (Control c in Controls) if (c is Chip && ((Chip)c).Text.StartsWith("Ajouter la sélection")) c.Visible = false;
+            stat.Text = "Appareils connectés au réseau local de ce PC (nom, adresse, fabricant). Aucun test de ports.";
+#endif
             Resize += (s, e) => { bar.Width = ClientSize.Width; grid.Size = new Size(ClientSize.Width, ClientSize.Height - grid.Top); };
             range.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; Scan(); } };
         }
@@ -109,6 +115,7 @@ namespace AmiOps
     }
 
     // ===================================================================== Messagerie (moteur MailCheck) sur tous les domaines clients
+#if !POSTE
     class MailPage : Page
     {
         readonly Grid grid; readonly Label stat; readonly NeonBar bar; bool busy;
@@ -345,6 +352,8 @@ namespace AmiOps
     }
 
     // ===================================================================== Outils intégrés (toute la suite alex.b dans un seul exe)
+#endif
+
     class Tool
     {
         public string Name, Hint, Glyph; public Func<Form> Make;
@@ -365,13 +374,21 @@ namespace AmiOps
         {
             new Tool { Name = "DiagPoste", Glyph = Theme.Icon("", "⚕"), Hint = "diagnostic + rapport ticket", Make = () => new DiagPoste.MainForm() },
             new Tool { Name = "MaintenancePC", Glyph = Theme.Icon("", "⚒"), Hint = "rapide / complète + pilotes", Make = () => new MaintenancePC.MainForm() },
+#if !POSTE
             new Tool { Name = "PrépaPoste", Glyph = Theme.Icon("", "▣"), Hint = "PC neuf en un clic", Make = () => new PrepaPoste.MainForm() },
+#endif
+#if !POSTE
             new Tool { Name = "ProfilSave", Glyph = Theme.Icon("", "☺"), Hint = "sauvegarde profil (chiffrée)", Make = () => new ProfilSave.MainForm() },
+#endif
             new Tool { Name = "TestReseau", Glyph = Theme.Icon("", "⇄"), Hint = "verdict réseau en 20 s", Make = () => new TestReseau.MainForm() },
             new Tool { Name = "ScanParc", Glyph = Theme.Icon("", "⌖"), Hint = "inventaire réseau complet", Make = () => new ScanParc.MainForm() },
+#if !POSTE
             new Tool { Name = "MailCheck", Glyph = Theme.Icon("", "✉"), Hint = "un domaine en détail", Make = () => new MailCheck.MainForm() },
+#endif
             new Tool { Name = "TriFichiers", Glyph = Theme.Icon("", "▤"), Hint = "doublons + rangement", Make = () => new TriFichiers.MainForm() },
+#if !POSTE
             new Tool { Name = "NasConnect", Glyph = Theme.Icon("", "◫"), Hint = "parc NAS, santé, lecteurs", Make = () => { Modules.Nas(); return null; } },
+#endif
             new Tool { Name = "NetSwitch", Glyph = Theme.Icon("", "⇆"), Hint = "DHCP / IP fixe (menu de l'icône)", Make = () => { if (TrayHost.Icon != null) TrayHost.Icon.ContextMenuStrip.Show(Cursor.Position); return null; } },
             new Tool { Name = "Outils VTx", Glyph = Theme.Icon("", "V"), Hint = "VMware / Hyper-V / VBS", Make = () => { Modules.Vtx(); return null; } },
             new Tool { Name = "PowerMenu", Glyph = Theme.Icon("", "⏻"), Hint = "arrêt, redémarrage, programmation", Make = () => { Modules.Power(); return null; } },
@@ -386,7 +403,7 @@ namespace AmiOps
         public ToolsPage()
         {
             Lbl("OUTILS", 0, k(2), "accent", 13f, true);
-            Lbl("Toute la suite alex.b est intégrée dans AMI·OPS : un seul exe.", k(110), k(10), "muted");
+            Lbl("Toute la suite alex.b est intégrée dans " + Ed.Name + " : un seul exe.", k(110), k(10), "muted");
             tiles = new FlowLayoutPanel { Location = new Point(0, k(40)), AutoScroll = true, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             foreach (var t in Tools.All)
             {
@@ -455,10 +472,10 @@ namespace AmiOps
             };
             var cLink = new CheckBox { Text = "Lecteurs réseau partagés avec l'Explorateur (EnableLinkedConnections, redémarrage)", Checked = TrayHost.LinkedConnections, AutoSize = true, Location = new Point(k(560), k(100)) };
             cLink.CheckedChanged += (s, e) => { try { TrayHost.LinkedConnections = cLink.Checked; CyberForm.Info(this, "Redémarre le PC pour appliquer."); } catch (Exception ex) { CyberForm.Warn(this, ex.Message); } };
-            var cUpd = new CheckBox { Text = "Vérifier les mises à jour d'AMI·OPS une fois par jour", Checked = Prefs.Ini.GetBool("UpdateAuto", true), AutoSize = true, Location = new Point(k(560), k(128)) };
+            var cUpd = new CheckBox { Text = "Vérifier les mises à jour de " + Ed.Name + " une fois par jour", Checked = Prefs.Ini.GetBool("UpdateAuto", true), AutoSize = true, Location = new Point(k(560), k(128)) };
             cUpd.CheckedChanged += (s, e) => { Prefs.Ini.Set("UpdateAuto", cUpd.Checked); Prefs.Save(); };
             Controls.AddRange(new Control[] { cTray, cAuto, cLink, cUpd });
-            Btn("▶ Autotest d'AMI·OPS (lecture seule)", t => t.Ok, k(560), k(160), (s, e) => Shell.RunSelfTest(), true);
+            Btn("▶ Autotest de " + Ed.Name + " (lecture seule)", t => t.Ok, k(560), k(160), (s, e) => Shell.RunSelfTest(), true);
             Lbl("Sauvegarde automatique : une copie par jour (60 jours) dans « sauvegardes » du dossier des données. Écriture atomique : pas de base corrompue en cas de coupure.", 0, y + k(48), "muted");
             Lbl("Base partagée sur un NAS : chaque enregistrement garde la version de l'autre poste en « conflit_… » si deux techniciens modifient en même temps.", 0, y + k(68), "muted");
         }
@@ -477,7 +494,10 @@ namespace AmiOps
                 {
                     foreach (var fl in new[] { "amiops.json", "coffre.json" }) { var src = Path.Combine(oldDir, fl); if (File.Exists(src)) File.Copy(src, Path.Combine(Store.Dir, fl), false); }
                 }
-                Vault.Lock(); Store.Load();
+#if !POSTE
+                Vault.Lock();
+#endif
+                Store.Load();
                 CyberForm.Info(this, exists ? "Base existante chargée depuis le nouveau dossier." : "Dossier des données changé.");
             }
             else CyberForm.Info(this, "Paramètres enregistrés.");
@@ -485,7 +505,7 @@ namespace AmiOps
 
         void Restore()
         {
-            using (var o = new OpenFileDialog { InitialDirectory = Store.BackupDir, Filter = "Sauvegarde AMI·OPS|amiops_*.json;conflit_*.json" })
+            using (var o = new OpenFileDialog { InitialDirectory = Store.BackupDir, Filter = "Sauvegarde " + Ed.Name + "|amiops_*.json;conflit_*.json" })
             {
                 if (o.ShowDialog(this) != DialogResult.OK) return;
                 if (!CyberForm.Ask(this, "Remplacer les données actuelles par :\n" + Path.GetFileName(o.FileName) + " ?\n\nLa version actuelle est d'abord copiée dans « sauvegardes »." )) return;

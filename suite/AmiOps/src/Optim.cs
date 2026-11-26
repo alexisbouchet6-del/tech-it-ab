@@ -1,4 +1,4 @@
-// AMI·OPS - Optimisation : bilan noté sur 10 par élément, préconisations, nettoyage, démarrage, applis, MAJ + pilotes, antivirus
+// Tech IT AB - Optimisation : bilan noté sur 10 par élément, préconisations, nettoyage, démarrage, applis, MAJ + pilotes, antivirus
 // Développé by alex.b
 
 using System;
@@ -28,7 +28,7 @@ namespace AmiOps
         public string Text()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("BILAN DU POSTE " + Environment.MachineName + " — note globale " + (Global >= 0 ? Global.ToString("0.0") : "?") + " / 10 (AMI·OPS)");
+            sb.AppendLine("BILAN DU POSTE " + Environment.MachineName + " — note globale " + (Global >= 0 ? Global.ToString("0.0") : "?") + " / 10 (" + Ed.Name + ")");
             foreach (var e in E) sb.AppendLine("- " + e.Name + " : " + (e.Note >= 0 ? e.Note.ToString("0.0") + "/10" : "n/a") + " — " + e.Constat + (e.Preco.Length > 0 ? " → " + e.Preco : ""));
             if (Upgrades.Count > 0) { sb.AppendLine("PRÉCONISATIONS MATÉRIEL :"); foreach (var u in Upgrades) sb.AppendLine("  • " + u); }
             return sb.ToString().TrimEnd();
@@ -410,7 +410,7 @@ namespace AmiOps
             x = Btn("Antivirus complet", t => t.Accent2, x, k(74), (s, e) => { if (CyberForm.Ask(this, "Analyse complète : 30 min à plusieurs heures. Lancer ?")) Go("Analyse antivirus complète", () => Optim.AvScan(true, Out), "av"); }).Right + k(6);
             x = Btn("Test du disque (surface)", t => t.Muted, x, k(74), (s, e) => Shell.Go("depann", "surface")).Right + k(6);
             x = Btn("Copier le bilan", t => t.Muted, x, k(74), (s, e) => { if (last != null) Clip.Text(last.Text()); }).Right + k(6);
-            Btn("＋ Intervention avec ce bilan", t => t.Muted, x, k(74), (s, e) => { if (last != null) Shell.NewIntervention(null, last.Text()); });
+            Btn(Ed.Full ? "＋ Intervention avec ce bilan" : "Enregistrer ce bilan", t => t.Muted, x, k(74), (s, e) => { if (last != null) Shell.NewIntervention(null, last.Text()); });
             noteBox = new Panel { Location = new Point(0, k(116)), Size = new Size(k(190), k(150)) };
             note = new Label { Text = "—", AutoSize = false, Dock = DockStyle.Top, Height = k(80), TextAlign = ContentAlignment.MiddleCenter, Font = new Font("Consolas", 36f, FontStyle.Bold), Tag = "muted" };
             noteSub = new Label { Text = "note globale / 10", AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.TopCenter, Tag = "muted" };

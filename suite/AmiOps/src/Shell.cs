@@ -1,4 +1,4 @@
-// AMI·OPS - point d'entrée, fenêtre principale, navigation, palette Ctrl+K, composants communs
+// Tech IT AB - point d'entrée, fenêtre principale, navigation, palette Ctrl+K, composants communs
 // Développé by alex.b
 
 using System;
@@ -21,6 +21,22 @@ namespace AmiOps
         public static bool IsWinPE { get { try { using (var k = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\MiniNT")) return k != null; } catch { return false; } } }
 
         // Le .NET réduit de WinPE peut ne pas contenir System.Web.Extensions : le mode secours doit démarrer quand même
+#if !POSTE
+        // Tech IT AB remplace AMI·OPS : première ouverture = copie des données AMI·OPS (clients, interventions, coffre, réglages)
+        static void Migrate()
+        {
+            try
+            {
+                var oldDir = Path.Combine(Path.GetDirectoryName(AppInfo.DataDir), "AmiOps");
+                if (!Directory.Exists(oldDir) || File.Exists(Path.Combine(AppInfo.DataDir, "config.ini")) || Directory.Exists(Path.Combine(AppInfo.DataDir, "donnees"))) return;
+                foreach (var d in Directory.GetDirectories(oldDir, "*", SearchOption.AllDirectories)) Directory.CreateDirectory(d.Replace(oldDir, AppInfo.DataDir));
+                foreach (var f in Directory.GetFiles(oldDir, "*", SearchOption.AllDirectories)) { var dst = f.Replace(oldDir, AppInfo.DataDir); if (!File.Exists(dst)) File.Copy(f, dst); }
+                File.WriteAllText(Path.Combine(AppInfo.DataDir, "migration-amiops.txt"), "Données AMI·OPS copiées depuis " + oldDir + " le " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + " (l'original est conservé).");
+            }
+            catch (Exception ex) { Log.Write("Migration AMI·OPS : " + ex.Message); }
+        }
+#endif
+
         static void SafeLoad()
         {
             try { Store.Load(); }
@@ -30,8 +46,15 @@ namespace AmiOps
         [STAThread]
         static void Main(string[] args)
         {
-            AppInfo.Name = "AMI·OPS"; AppInfo.Id = "AmiOps"; AppInfo.Version = "1.3.0"; AppInfo.MachineWide = false;
+            AppInfo.Name = Ed.Name; AppInfo.Id = Ed.Id; AppInfo.Version = Ed.Version; AppInfo.MachineWide = false;
+#if !POSTE
+            Migrate();
+#endif
+            #if POSTE
+            Secours = false;
+#else
             Secours = args.Any(a => a.Equals("--secours", StringComparison.OrdinalIgnoreCase)) || IsWinPE;
+#endif
             // « Annuler la tâche » arrête réellement le programme en cours de la tâche (et ses enfants)
             Proc.Token = () => Job.Current != null ? Job.Current.Cts.Token : System.Threading.CancellationToken.None;
             StartHidden = args.Any(a => a.Equals("--tray", StringComparison.OrdinalIgnoreCase));
@@ -39,7 +62,7 @@ namespace AmiOps
             int st = Array.FindIndex(args, a => a.StartsWith("--selftest", StringComparison.OrdinalIgnoreCase));
             if (st >= 0) { Environment.Exit(SelfTest.Headless(st + 1 < args.Length ? args[st + 1] : null, !args[st].EndsWith("-ci", StringComparison.OrdinalIgnoreCase))); return; }
             try { System.Net.ServicePointManager.SecurityProtocol = (System.Net.SecurityProtocolType)3072 | (System.Net.SecurityProtocolType)12288; } catch { System.Net.ServicePointManager.SecurityProtocol = (System.Net.SecurityProtocolType)3072; }
-            Boot.Run(() => { SafeLoad(); return new MainForm(); }, true, "AMI·OPS diagnostique et répare les postes : droits administrateur nécessaires.");
+            Boot.Run(() => { SafeLoad(); return new MainForm(); }, true, Ed.Name + " diagnostique et répare les postes : droits administrateur nécessaires.");
         }
     }
 
@@ -252,28 +275,51 @@ namespace AmiOps
 
             // actions
             Action<string, string, Action> act = (txt, sub, go) => all.Add(new Item { Kind = "action", Text = txt, Sub = sub, Go = go });
+#if !POSTE
             act("Nouvelle intervention", "Ctrl+N · chrono lancé automatiquement", () => shell.NewIntervention(null));
+#endif
             act("PanneScan : analyser ce PC", "écrans bleus, arrêts brutaux, disque, RAM, pilotes", () => shell.Go("panne", "run"));
+#if !POSTE
             act("Nouveau client", "fiche client", () => shell.Go("clients", "new"));
+#endif
             act("Scanner le réseau", "inventaire + ajout à une fiche client", () => shell.Go("reseau", null));
+#if !POSTE
             act("Vérifier tous les domaines", "SPF, DKIM, DMARC, certificats", () => shell.Go("mail", "all"));
+#endif
+#if !POSTE
             act("Coffre des identifiants", "AES-256", () => shell.Go("coffre", null));
+#endif
+#if !POSTE
             act("Mode secours", "PC qui ne démarre plus, disque branché en USB", () => shell.Go("secours", null));
+#endif
+#if !POSTE
             act("Temps passé", "par client, export", () => shell.Go("temps", null));
+#endif
             act("Optimisation : bilan du poste", "note /10 par élément + préconisations", () => shell.Go("optim", null));
             act("Audit de sécurité", "note /100, corrections", () => shell.Go("secu", null));
             act("Écrans bleus : pilote en cause", "WinDbg", () => shell.Go("depann", null));
             act("Surveillance des coupures réseau", "box / Internet / DNS", () => shell.Go("netdiag", null));
+#if !POSTE
             act("Compte AD verrouillé", "quel PC le bloque", () => shell.Go("ad", null));
+#endif
+#if !POSTE
             act("Scénarios (PC lent, écran bleu, PC neuf…)", "étapes enchaînées en tâche de fond", () => { using (var sf = new ScenarioForm(shell)) sf.ShowDialog(shell); });
+#endif
             act("Tâches en cours", "centre des tâches", () => shell.Go("taches", null));
+#if !POSTE
             act("Multi-PC", "même action sur plusieurs PC (WinRM ou Tactical RMM)", () => shell.Go("multi", null));
+#endif
+#if !POSTE
             act("Connecteurs GLPI / Tactical RMM", "synchronisation, agents", () => shell.Go("connect", null));
+            act("Cyber : scan Nmap", "périmètre autorisé du client", () => shell.Go("cyber", null));
+            act("Cyber : chasse aux menaces", "journaux, persistance, connexions", () => shell.Go("cyber", null));
             act("Parc client : recette de livraison", "contrôle du PC avant remise au client", () => shell.Go("parc", null));
             act("Parc client : état du parc", "GLPI + Tactical RMM", () => shell.Go("parc", null));
-            act("Autotest d'AMI·OPS", "tous les modules en lecture seule", () => shell.RunSelfTest());
+#endif
+            act("Autotest de " + Ed.Name, "tous les modules en lecture seule", () => shell.RunSelfTest());
             act("Changer de thème", "sombre / clair", () => shell.ToggleTheme());
             foreach (var tool in Tools.All) { var tl = tool; all.Add(new Item { Kind = "outil", Text = tl.Name, Sub = tl.Hint, Go = () => tl.Launch(shell) }); }
+#if !POSTE
             foreach (var c in Store.D.Clients)
             {
                 var cc = c;
@@ -286,6 +332,7 @@ namespace AmiOps
                 var ii = i;
                 all.Add(new Item { Kind = "interv.", Text = Store.ClientName(i.ClientId) + " — " + i.Type + " — " + i.Date.ToString("dd/MM/yyyy"), Sub = (i.Ticket.Length > 0 ? "#" + i.Ticket + " · " : "") + Short(i.Demande), Go = () => shell.EditIntervention(ii) });
             }
+#endif
             box.TextChanged += (s, e) => Filter();
             KeyDown += (s, e) =>
             {
@@ -326,9 +373,9 @@ namespace AmiOps
         readonly Label lRun, lVault;
         string current;
 
-        public MainForm() : base("AMI·OPS", 1380, 880)
+        public MainForm() : base(Ed.Name, 1380, 880)
         {
-            SetSubtitle((Program.Secours ? "MODE SECOURS  //  " : "") + "Console du technicien  //  " + Environment.MachineName + "  //  Ctrl+K : tout rechercher  //  by alex.b");
+            SetSubtitle((Program.Secours ? "MODE SECOURS  //  " : "") + Ed.Tagline + "  //  " + Environment.MachineName + "  //  Ctrl+K : tout rechercher  //  by alex.b");
             Func<float, int> k = Theme.S;
             side = new Panel { Dock = DockStyle.Left, Width = k(212) };
             host = new Panel { Dock = DockStyle.Fill, Padding = new Padding(k(16), k(6), k(16), k(10)) };
@@ -349,6 +396,7 @@ namespace AmiOps
                 new[] { "multi", Theme.Icon("", "⧉"), "Multi-PC" },
                 new[] { "mail", Theme.Icon("", "✉"), "Messagerie" },
                 new[] { "secu", Theme.Icon("", "⛨"), "Sécurité" },
+                new[] { "cyber", Theme.Icon("", "◎"), "Cyber" },
                 new[] { "ad", Theme.Icon("", "⌂"), "Serveur AD" },
                 new[] { "coffre", Theme.Icon("", "🔒"), "Coffre" },
                 new[] { "temps", Theme.Icon("", "◷"), "Temps passé" },
@@ -357,25 +405,36 @@ namespace AmiOps
                 new[] { "connect", Theme.Icon("", "⇌"), "Connecteurs" },
                 new[] { "params", Theme.Icon("", "⚙"), "Paramètres" },
             };
+#if POSTE
+            // PC Santé AB : santé et informatique du PC uniquement
+            defs = defs.Where(d => new[] { "accueil", "taches", "panne", "optim", "depann", "reseau", "netdiag", "secu", "outils", "params" }.Contains(d[0])).ToArray();
+#endif
             int y = k(6);
             foreach (var d in defs)
             {
-                var n = new Nav(d[0], d[1], d[2]) { Location = new Point(0, y), Width = k(212) };
+                var n = new Nav(d[0], d[1], d[2]) { Location = new Point(0, y), Width = k(212), Height = k(Ed.Full ? 28 : 30) };
                 n.Click += (s, e) => Go(((Nav)s).Key, null);
-                side.Controls.Add(n); navs.Add(n); y += k(31);
+                side.Controls.Add(n); navs.Add(n); y += k(Ed.Full ? 29 : 31);   // 23 onglets dans Tech IT AB : pas resserré
             }
             lRun = new Label { AutoSize = false, Location = new Point(k(14), y + k(14)), Size = new Size(k(190), k(60)), Tag = "ok", Font = new Font("Consolas", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
+#if !POSTE
             lRun.Click += (s, e) => { var r = Store.Running(); if (r != null) EditIntervention(r); };
+#endif
             lVault = new Label { AutoSize = true, Location = new Point(k(14), y + k(78)), Tag = "muted", Font = new Font("Consolas", 8f) };
-            var lKey = new Label { AutoSize = true, Location = new Point(k(14), y + k(98)), Tag = "muted", Font = new Font("Consolas", 8f), Text = "Ctrl+K  recherche\r\nCtrl+N  intervention\r\nCtrl+L  verrouiller" };
+            var lKey = new Label { AutoSize = true, Location = new Point(k(14), y + k(98)), Tag = "muted", Font = new Font("Consolas", 8f), Text = Ed.Full ? "Ctrl+K  recherche\r\nCtrl+N  intervention\r\nCtrl+L  verrouiller" : "Ctrl+K  recherche" };
             side.Controls.AddRange(new Control[] { lRun, lVault, lKey });
             side.Paint += (s, e) => { using (var p = new Pen(Theme.Current.Border)) e.Graphics.DrawLine(p, side.Width - 1, 0, side.Width - 1, side.Height); };
 
+#if POSTE
+            Register(new PosteHome()); Register(new PannePage()); Register(new ReseauPage()); Register(new ToolsPage()); Register(new SettingsPage());
+            Register(new OptimPage()); Register(new DepannPage()); Register(new NetDiagPage()); Register(new SecuPage()); Register(new TasksPage());
+#else
             Register(new HomePage()); Register(new ClientsPage()); Register(new InterventionsPage()); Register(new PannePage());
             Register(new ReseauPage()); Register(new MailPage()); Register(new VaultPage()); Register(new TempsPage());
             Register(new ToolsPage()); Register(new SecoursPage()); Register(new SettingsPage());
             Register(new OptimPage()); Register(new DepannPage()); Register(new NetDiagPage()); Register(new SecuPage()); Register(new AdPage());
-            Register(new TasksPage()); Register(new MultiPage()); Register(new ConnectPage()); Register(new ParcPage());
+            Register(new TasksPage()); Register(new MultiPage()); Register(new ConnectPage()); Register(new ParcPage()); Register(new CyberPage());
+#endif
 
             var tick = new Timer { Interval = 1000 };
             tick.Tick += (s, e) => Tick();
@@ -383,8 +442,10 @@ namespace AmiOps
             KeyDown += (s, e) =>
             {
                 if (e.Control && e.KeyCode == Keys.K) { e.SuppressKeyPress = true; ShowPalette(); }
+#if !POSTE
                 else if (e.Control && e.KeyCode == Keys.N) { e.SuppressKeyPress = true; NewIntervention(null); }
                 else if (e.Control && e.KeyCode == Keys.L) { e.SuppressKeyPress = true; Vault.Lock(); Tick(); if (current == "coffre") pages[current].OnShow(); }
+#endif
             };
             Store.Changed += () => { if (IsHandleCreated) BeginInvoke(new Action(Tick)); };
             Go(Program.Secours ? "secours" : "accueil", null);
@@ -396,16 +457,17 @@ namespace AmiOps
                 if (!TrayHost.Quitting && e.CloseReason == CloseReason.UserClosing && Prefs.Ini.GetBool("Tray", true))
                 {
                     e.Cancel = true; Hide();
-                    if (Prefs.Ini.Get("TrayTip", "") != "1") { Notify("AMI·OPS reste actif", "Près de l'horloge : réseau rapide, chrono, tâches. Clic droit > Quitter pour fermer."); Prefs.Ini.Set("TrayTip", "1"); Prefs.Save(); }
+                    if (Prefs.Ini.Get("TrayTip", "") != "1") { Notify(Ed.Name + " reste actif", "Près de l'horloge : réseau rapide, chrono, tâches. Clic droit > Quitter pour fermer."); Prefs.Ini.Set("TrayTip", "1"); Prefs.Save(); }
                     return;
                 }
                 if (TrayHost.Icon != null) { TrayHost.Icon.Visible = false; TrayHost.Icon.Dispose(); }
             };
             Jobs.Changed += () => { if (IsHandleCreated) try { BeginInvoke(new Action(Tick)); } catch { } };
+#if !POSTE
             if (!Program.Secours && Prefs.Ini.GetBool("UpdateAuto", true) && Prefs.Ini.Get("UpdateLast", "") != DateTime.Today.ToString("yyyy-MM-dd"))
                 System.Threading.Tasks.Task.Run(() =>
                 {
-                    try { string u, sm, tag; var n = Updater.Check(out u, out sm, out tag); Prefs.Ini.Set("UpdateLast", DateTime.Today.ToString("yyyy-MM-dd")); Prefs.Save(); if (n != null) BeginInvoke(new Action(() => Notify("Mise à jour disponible", "AMI·OPS " + n + " : Connecteurs > Mise à jour d'AMI·OPS"))); }
+                    try { string u, sm, tag; var n = Updater.Check(out u, out sm, out tag); Prefs.Ini.Set("UpdateLast", DateTime.Today.ToString("yyyy-MM-dd")); Prefs.Save(); if (n != null) BeginInvoke(new Action(() => Notify("Mise à jour disponible", Ed.Name + " " + n + " : Connecteurs > Mise à jour de " + Ed.Name))); }
                     catch (Exception ex) { Log.Write("Vérification de mise à jour : " + ex.Message); }
                 });
             if (!Program.Secours && Prefs.Ini.GetBool("InfraAuto", true) && (Glpi.Configured || Trmm.Configured) && Prefs.Ini.Get("InfraLast", "") != DateTime.Today.ToString("yyyy-MM-dd"))
@@ -418,6 +480,7 @@ namespace AmiOps
                     }
                     catch (Exception ex) { Log.Write("Contrôle des serveurs : " + ex.Message); }
                 });
+#endif
         }
 
         public void Notify(string title, string text)
@@ -429,7 +492,7 @@ namespace AmiOps
         public void RunSelfTest()
         {
             Go("taches", null);
-            Jobs.Run("Autotest d'AMI·OPS", null, j =>
+            Jobs.Run("Autotest de " + Ed.Name, null, j =>
             {
                 var l = SelfTest.Run(true, r => j.Log("[" + r.Status + "] " + r.Name + " — " + r.Detail, r.Status == "OK" ? "ok" : r.Status == "KO" ? "bad" : "muted"));
                 var txt = SelfTest.Text(l); var file = Path.Combine(AppInfo.DataDir, "autotest-" + DateTime.Now.ToString("yyyyMMdd-HHmm") + ".txt");
@@ -442,10 +505,16 @@ namespace AmiOps
         void Register(Page p) { p.Shell = this; p.Visible = false; host.Controls.Add(p); pages[KeyOf(p)] = p; }
         static string KeyOf(Page p)
         {
+#if POSTE
+            if (p is PosteHome) return "accueil"; if (p is PannePage) return "panne"; if (p is ReseauPage) return "reseau"; if (p is ToolsPage) return "outils";
+            if (p is OptimPage) return "optim"; if (p is DepannPage) return "depann"; if (p is NetDiagPage) return "netdiag"; if (p is SecuPage) return "secu"; if (p is TasksPage) return "taches";
+            return "params";
+#else
             if (p is HomePage) return "accueil"; if (p is ClientsPage) return "clients"; if (p is InterventionsPage) return "interv"; if (p is PannePage) return "panne";
             if (p is ReseauPage) return "reseau"; if (p is MailPage) return "mail"; if (p is VaultPage) return "coffre"; if (p is TempsPage) return "temps";
-            if (p is ParcPage) return "parc"; if (p is TasksPage) return "taches"; if (p is MultiPage) return "multi"; if (p is ConnectPage) return "connect"; if (p is OptimPage) return "optim"; if (p is DepannPage) return "depann"; if (p is NetDiagPage) return "netdiag"; if (p is SecuPage) return "secu"; if (p is AdPage) return "ad";
+            if (p is ParcPage) return "parc"; if (p is CyberPage) return "cyber"; if (p is TasksPage) return "taches"; if (p is MultiPage) return "multi"; if (p is ConnectPage) return "connect"; if (p is OptimPage) return "optim"; if (p is DepannPage) return "depann"; if (p is NetDiagPage) return "netdiag"; if (p is SecuPage) return "secu"; if (p is AdPage) return "ad";
             if (p is ToolsPage) return "outils"; if (p is SecoursPage) return "secours"; return "params";
+#endif
         }
 
         public void Go(string key, object arg)
@@ -468,19 +537,21 @@ namespace AmiOps
             var r = Store.Running();
             lRun.Text = r != null ? "● EN COURS\r\n" + Store.ClientName(r.ClientId) + "\r\n" + ((int)r.Elapsed.TotalHours).ToString("00") + ":" + r.Elapsed.Minutes.ToString("00") + ":" + r.Elapsed.Seconds.ToString("00") : "";
             // verrouillage automatique du coffre
+#if !POSTE
             int min = Prefs.Ini.GetInt("VaultLockMin", 5);
             if (Vault.Unlocked && (DateTime.Now - Vault.LastUse).TotalMinutes >= min) { Vault.Lock(); if (current == "coffre") pages["coffre"].OnShow(); }
             lVault.Text = Vault.Unlocked ? "coffre : ouvert" : Vault.Exists ? "coffre : verrouillé" : "coffre : non créé";
             lVault.Tag = Vault.Unlocked ? "warn" : "muted"; lVault.ForeColor = Theme.Current.ByName((string)lVault.Tag);
+#endif
             var jn = navs.FirstOrDefault(n => n.Key == "taches"); var jb = Jobs.Running > 0 ? Jobs.Running.ToString() : "";
             if (jn != null && jn.Badge != jb) { jn.Badge = jb; jn.Invalidate(); }
-            if (TrayHost.Icon != null) { var tip = "AMI·OPS" + (r != null ? " · chrono " + Store.ClientName(r.ClientId) : "") + (Jobs.Running > 0 ? " · " + Jobs.Running + " tâche(s)" : ""); TrayHost.Icon.Text = tip.Length > 63 ? tip.Substring(0, 63) : tip; }
+            if (TrayHost.Icon != null) { var tip = Ed.Name + (r != null ? " · chrono " + Store.ClientName(r.ClientId) : "") + (Jobs.Running > 0 ? " · " + Jobs.Running + " tâche(s)" : ""); TrayHost.Icon.Text = tip.Length > 63 ? tip.Substring(0, 63) : tip; }
             var open = Store.D.Interventions.Count(i => !i.Done);
-            var nav = navs.First(n => n.Key == "interv"); var b = open > 0 ? open.ToString() : "";
-            if (nav.Badge != b) { nav.Badge = b; nav.Invalidate(); }
+            var nav = navs.FirstOrDefault(n => n.Key == "interv"); var b = open > 0 ? open.ToString() : "";   // absent de PC Santé AB
+            if (nav != null && nav.Badge != b) { nav.Badge = b; nav.Invalidate(); }
             var badMail = Store.D.Mail.Count(m => m.Color == "bad" && Store.D.Clients.Any(c => c.Domains.Contains(m.Domain)));
-            var navm = navs.First(n => n.Key == "mail"); var bm = badMail > 0 ? badMail.ToString() : "";
-            if (navm.Badge != bm) { navm.Badge = bm; navm.Invalidate(); }
+            var navm = navs.FirstOrDefault(n => n.Key == "mail"); var bm = badMail > 0 ? badMail.ToString() : "";
+            if (navm != null && navm.Badge != bm) { navm.Badge = bm; navm.Invalidate(); }
         }
 
         public override void ApplyTheme()
@@ -491,6 +562,7 @@ namespace AmiOps
         }
 
         // ---------------------------------------------------------------- interventions (accessibles de partout)
+#if !POSTE
         public void NewIntervention(string clientId, string diag = null)
         {
             var running = Store.Running();
@@ -508,5 +580,15 @@ namespace AmiOps
             Store.Save();
             RefreshCurrent();
         }
+#else
+        // PC Santé AB : pas de fiche d'intervention, le diagnostic est enregistré en rapport texte et ouvert
+        public void NewIntervention(string clientId, string diag = null)
+        {
+            if (string.IsNullOrEmpty(diag)) return;
+            var f = Path.Combine(Report.Dir, DateTime.Now.ToString("yyyy-MM-dd_HHmm") + "_rapport.txt");
+            File.WriteAllText(f, Ed.Name + " — " + Environment.MachineName + " — " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + Environment.NewLine + Environment.NewLine + diag, new System.Text.UTF8Encoding(true));
+            try { Process.Start("notepad.exe", "\"" + f + "\""); } catch { }
+        }
+#endif
     }
 }

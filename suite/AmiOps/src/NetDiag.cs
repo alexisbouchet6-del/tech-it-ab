@@ -1,4 +1,4 @@
-// AMI·OPS - Diagnostic réseau : Wi-Fi, surveillance des coupures, serveur DHCP pirate, débit entre 2 PC, test SMTP
+// Tech IT AB - Diagnostic réseau : Wi-Fi, surveillance des coupures, serveur DHCP pirate, débit entre 2 PC, test SMTP
 // Développé by alex.b
 
 using System;
@@ -200,7 +200,7 @@ namespace AmiOps
 
         string Report()
         {
-            var sb = new StringBuilder("SURVEILLANCE RÉSEAU — " + Environment.MachineName + " — début " + start.ToString("dd/MM/yyyy HH:mm") + " (AMI·OPS, by alex.b)\r\n" + Summary() + "\r\nCOUPURES :\r\n");
+            var sb = new StringBuilder("SURVEILLANCE RÉSEAU — " + Environment.MachineName + " — début " + start.ToString("dd/MM/yyyy HH:mm") + " (" + Ed.Name + ", by alex.b)\r\n" + Summary() + "\r\nCOUPURES :\r\n");
             lock (targets) foreach (var t in targets) foreach (var o in t.Outages) sb.AppendLine("  " + t.Name + " : " + o);
             return sb.ToString();
         }
@@ -286,12 +286,12 @@ namespace AmiOps
 
         public static void ServerStart(Action<string, string> log)
         {
-            int fwrc = Sh.Cmd(Proc.Sys("netsh.exe"), "advfirewall firewall add rule name=\"AMI-OPS debit\" dir=in action=allow protocol=TCP localport=" + Port, 30000);
+            int fwrc = Sh.Cmd(Proc.Sys("netsh.exe"), "advfirewall firewall add rule name=\"" + Ed.Id + " debit\" dir=in action=allow protocol=TCP localport=" + Port, 30000);
             server = new TcpListener(IPAddress.Any, Port); server.Start(); serving = true;
             var ips = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
                 .SelectMany(n => n.GetIPProperties().UnicastAddresses).Where(u => u.Address.AddressFamily == AddressFamily.InterNetwork).Select(u => u.Address.ToString());
             log("Serveur de débit actif sur " + string.Join(" / ", ips) + " port " + Port + (fwrc == 0 ? " (règle pare-feu temporaire ajoutée)." : " — règle pare-feu NON ajoutée : autoriser le port " + Port + " manuellement."), fwrc == 0 ? "ok" : "warn");
-            log("Sur l'autre PC : AMI·OPS > Diagnostic réseau > « Débit : client » avec une de ces adresses. Re-clique « Débit : serveur » pour arrêter.", "text");
+            log("Sur l'autre PC : " + Ed.Name + " > Diagnostic réseau > « Débit : client » avec une de ces adresses. Re-clique « Débit : serveur » pour arrêter.", "text");
             new Thread(() =>
             {
                 while (serving)
@@ -318,7 +318,7 @@ namespace AmiOps
         public static void ServerStop(Action<string, string> log)
         {
             serving = false; try { server.Stop(); } catch { }
-            Sh.Cmd(Proc.Sys("netsh.exe"), "advfirewall firewall delete rule name=\"AMI-OPS debit\"", 30000);
+            Sh.Cmd(Proc.Sys("netsh.exe"), "advfirewall firewall delete rule name=\"" + Ed.Id + " debit\"", 30000);
             log("Serveur de débit arrêté, règle pare-feu retirée.", "ok");
         }
 
@@ -361,7 +361,7 @@ namespace AmiOps
                 }
                 if (user.Length > 0)
                 {
-                    if (!(s is SslStream)) { log("Authentification refusée par AMI·OPS sur une connexion NON chiffrée (le mot de passe circulerait en clair).", "bad"); return; }
+                    if (!(s is SslStream)) { log("Authentification refusée par " + Ed.Name + " sur une connexion NON chiffrée (le mot de passe circulerait en clair).", "bad"); return; }
                     send(s, "AUTH LOGIN", null); read(s);
                     send(s, Convert.ToBase64String(Encoding.UTF8.GetBytes(user)), "(identifiant)"); read(s);
                     send(s, Convert.ToBase64String(Encoding.UTF8.GetBytes(pass)), "(mot de passe masqué)"); var a = read(s);

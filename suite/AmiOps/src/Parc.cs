@@ -1,4 +1,4 @@
-// AMI·OPS - parc des clients (projet GLPI Amiprotek) : recette de livraison, enrôlement, tableau de bord,
+// Tech IT AB - parc des clients (projet GLPI Amiprotek) : recette de livraison, enrôlement, tableau de bord,
 // rapport mensuel de conformité, NAS → GLPI, tickets dans les deux sens, santé des serveurs.
 // Développé by alex.b
 using System;
@@ -304,7 +304,7 @@ namespace AmiOps
         }
         public static int LastGlpiId; public static string LastPc = "";
 
-        // séquestre de la clé de récupération dans le coffre AMI·OPS (jamais dans GLPI : lisible par tout technicien)
+        // séquestre de la clé de récupération dans le coffre Tech IT AB (jamais dans GLPI : lisible par tout technicien)
         public static string Escrow(Client c)
         {
             if (!Vault.Unlocked) throw new Exception("déverrouille le coffre d'abord (page Coffre)");
@@ -509,7 +509,7 @@ namespace AmiOps
                 foreach (var i in inter.OrderBy(x => x.Date)) sb.Append("<tr><td>").Append(i.Date.ToString("dd/MM")).Append("</td><td>").Append(Fmt.Html(i.Type)).Append("</td><td>").Append(Fmt.Html(i.Demande.Split('\n')[0])).Append("</td><td>").Append(HomePage.Fmt(i.TotalMinutes)).Append("</td><td>").Append(Fmt.Html(i.Result)).Append("</td></tr>");
                 sb.Append("</table>");
             }
-            sb.Append("<footer>").Append(Fmt.Html(co)).Append(" · rapport généré le ").Append(DateTime.Now.ToString("dd/MM/yyyy")).Append(" · AMI·OPS by alex.b</footer></body></html>");
+            sb.Append("<footer>").Append(Fmt.Html(co)).Append(" · rapport généré le ").Append(DateTime.Now.ToString("dd/MM/yyyy")).Append(" · " + Ed.Name + " by alex.b</footer></body></html>");
             return sb.ToString();
         }
 
@@ -703,7 +703,7 @@ namespace AmiOps
                 j.Check(); if (fTr.Value == "Oui") Enrol.InstallTrmm(fDep.Value, j.Log);
                 j.Check(); if (fBl.Value == "Oui") { Enrol.BitLocker(j.Log); var id = Recette.Escrow(c); j.Log("Clé de récupération séquestrée dans le coffre (ID " + id + ").", "ok"); }
                 j.Check(); if (fRen.Value == "Oui") Enrol.Rename(fName.Value, j.Log);
-                if (!c.Assets.Any(a => a.Name.Equals(fName.Value, StringComparison.OrdinalIgnoreCase))) { c.Assets.Add(new Asset { Id = Store.NewId(), Kind = "PC", Name = fName.Value, Added = DateTime.Now, Notes = "enrôlé par AMI·OPS le " + DateTime.Now.ToString("dd/MM/yyyy") }); Store.Save(); }
+                if (!c.Assets.Any(a => a.Name.Equals(fName.Value, StringComparison.OrdinalIgnoreCase))) { c.Assets.Add(new Asset { Id = Store.NewId(), Kind = "PC", Name = fName.Value, Added = DateTime.Now, Notes = "enrôlé par " + Ed.Name + " le " + DateTime.Now.ToString("dd/MM/yyyy") }); Store.Save(); }
                 j.Log("Enrôlement terminé. Redémarre le PC, puis lance la recette (l'inventaire GLPI arrive en quelques minutes).", "ok");
             });
             stat.Text = "Enrôlement lancé (suivi dans Tâches).";

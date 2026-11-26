@@ -1,0 +1,25 @@
+PC Santé AB {VERSION} - santé et dépannage du PC - Développé by alex.b
+
+À QUOI ÇA SERT
+Contrôler, réparer et optimiser CE PC. Rien d'autre : aucun accès aux autres ordinateurs, aucune fiche client,
+aucun mot de passe stocké, aucun outil d'analyse réseau offensif. Ces fonctions ne sont pas cachées : elles ne
+sont pas dans le programme.
+
+CE QUE CONTIENT L'APPLICATION
+- Accueil : nom du PC, version de Windows, place libre, accès direct aux contrôles.
+- Optimisation : bilan noté sur 10 par élément (processeur, mémoire, disque, démarrage, mises à jour, pilotes,
+  sécurité, batterie…) avec préconisations ; nettoyage, mises à jour Windows, programmes au démarrage.
+- PanneScan : écrans bleus, arrêts brutaux, état du disque et de la mémoire, pilotes en erreur, en 30 secondes.
+- Dépannage : réparations Windows (fichiers système, Windows Update, imprimante, réseau, Outlook…).
+- Sécurité du PC : note sur 100 et corrections proposées.
+- Diagnostic réseau : Wi-Fi, box, Internet, DNS, débit, surveillance des coupures.
+- Appareils du réseau : liste des appareils connectés au réseau de ce PC (nom, adresse, fabricant),
+  sans aucun test de ports.
+- Outils : DiagPoste, MaintenancePC, TestReseau, TriFichiers, NetSwitch, Outils VTx, PowerMenu, raccourcis Windows.
+- Tâches : plusieurs contrôles en même temps, annulables.
+- Les diagnostics peuvent être enregistrés en rapport texte (Documents\PC Santé AB).
+
+INSTALLATION
+PCSanteAB-Setup-{VERSION}.exe sur le PC, puis « PC Santé AB » dans le menu Démarrer. Droits administrateur
+demandés au lancement (réparations). Version portable : PCSanteAB-portable.exe.
+Exe non signé : SmartScreen > « Informations complémentaires » > « Exécuter quand même ».

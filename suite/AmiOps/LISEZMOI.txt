@@ -1,4 +1,8 @@
-AMI·OPS {VERSION} - la console du technicien - Développé by alex.b
+Tech IT AB {VERSION} - la console du technicien et le labo cyber - Développé by alex.b
+
+Tech IT AB REMPLACE AMI·OPS. Au premier lancement, tes données AMI·OPS (clients, interventions, coffre, réglages)
+sont copiées automatiquement ; l'original reste en place. Le Setup désinstalle l'ancienne version d'AMI·OPS.
+USAGE RÉSERVÉ AU TECHNICIEN : ne pas installer chez un client (version client = PC Santé AB).
 
 UN SEUL EXE POUR TOUT LE QUOTIDIEN
 - Accueil : chiffres du mois, heures, alertes triées (interventions à clôturer, messagerie en erreur,
@@ -50,6 +54,30 @@ NOUVEAU EN 1.1 - OUTILS TECHNIQUES
 
 Windows 11 : l'analyse Wi-Fi demande d'activer la localisation (Paramètres > Confidentialité > Localisation).
 VirusTotal : clé API gratuite à saisir une fois (stockée chiffrée DPAPI) ; seules les empreintes SHA-256 sont envoyées.
+
+NOUVEAU EN 1.4 - CYBER ET LABO DÉFENSIF (page « Cyber »)
+Prérequis scans : Nmap installé depuis nmap.org (avec Npcap). Sa licence interdit de l'intégrer à l'exe.
+- PÉRIMÈTRE ET AUTORISATION (obligatoires) : pour chaque client, réseaux autorisés + référence du document écrit
+  du client. Tout scan hors périmètre, sans autorisation ou avec une autorisation de plus d'un an est REFUSÉ.
+  Chaque scan (et chaque refus) est inscrit dans cyber-audit.log (bouton « Journal des scans »).
+- SCANS NMAP : découverte, ports + versions, services à risque, vulnérabilités connues (scripts « vuln » ET « safe »),
+  TLS et certificats, SMB, audit complet. Aucun script offensif : catégories exploit, dos, brute, malware, fuzzer et
+  intrusive refusées (seule exception : ssl-enum-ciphers, classé « intrusive » par Nmap parce qu'il ouvre beaucoup
+  de connexions, sans exploitation).
+- RÈGLES DE RISQUE (ANSSI, CIS, MITRE ATT&CK) : Telnet, FTP anonyme, RDP (Internet, sans NLA), VNC sans mot de passe,
+  SMBv1, signature SMB, bases de données joignables, SNMP « public », UPnP, interfaces d'admin en HTTP, TLS 1.0/1.1,
+  chiffrements faibles, certificats expirés, vulnérabilités avec CVE, systèmes plus maintenus.
+  Comparaison automatique avec le scan précédent (nouveaux ports ouverts).
+- POSTE : chasse aux menaces dans les journaux (force brute, compte créé, ajout aux administrateurs, journal effacé,
+  RDP, tâche planifiée, service installé, PowerShell suspect, détections Defender), persistance (Run, dossiers
+  Démarrage, tâches, services, WMI), connexions et ports en écoute, mot de passe compromis (Have I Been Pwned :
+  5 caractères d'empreinte envoyés, jamais le mot de passe), fichier suspect (VirusTotal par empreinte, rien n'est envoyé).
+- LABO DÉFENSIF : analyse d'un e-mail (SPF/DKIM/DMARC, nom affiché trompeur, sosies de domaine, liens déguisés,
+  pièces jointes piégées), analyse d'un lien (IP loggers connus, raccourcisseurs, punycode, « @ ») sans l'ouvrir,
+  scans reçus et surveillance en continu (journal du pare-feu : alerte dès 5 ports sondés en 1 minute),
+  durcissement anti-scan RÉVERSIBLE (LLMNR, NetBIOS, pare-feu, profil public furtif), test d'un programme
+  (signature, ASLR, DEP, CFG) et comportement avant / après exécution (à faire dans une VM).
+- RAPPORT CYBER client en PDF, envoi dans GLPI (ticket si point critique).
 
 NOUVEAU EN 1.3 - PROJET GLPI AMIPROTEK (page « Parc client »)
 Prérequis : le nom du client contient son code (« CLI-09-16-0699 - Nom »), GLPI et Tactical RMM configurés

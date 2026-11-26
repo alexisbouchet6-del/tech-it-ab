@@ -1,4 +1,4 @@
-// AMI·OPS - mode secours : réparer un Windows qui ne démarre plus (depuis la clé WinPE ou un disque branché en USB)
+// Tech IT AB - mode secours : réparer un Windows qui ne démarre plus (depuis la clé WinPE ou un disque branché en USB)
 // Développé by alex.b
 
 using System;
@@ -266,7 +266,7 @@ namespace AmiOps
         public SecoursPage()
         {
             Lbl("SECOURS", 0, k(2), "accent", 13f, true);
-            Lbl(Program.IsWinPE ? "Démarré depuis la clé AMI·OPS (WinPE) : le Windows du PC est réparé hors ligne." : "Répare un Windows qui ne démarre plus : disque du PC en panne branché sur ce poste (boîtier / dock USB), ou depuis la clé AMI·OPS.", k(120), k(10), "muted");
+            Lbl(Program.IsWinPE ? "Démarré depuis la clé " + Ed.Name + " (WinPE) : le Windows du PC est réparé hors ligne." : "Répare un Windows qui ne démarre plus : disque du PC en panne branché sur ce poste (boîtier / dock USB), ou depuis la clé " + Ed.Name + ".", k(120), k(10), "muted");
             target = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(0, k(40)), Width = k(560) };
             Controls.Add(target);
             Btn("Actualiser", t => t.Muted, k(570), k(36), (s, e) => Scan());
@@ -304,7 +304,7 @@ namespace AmiOps
             {
                 if (busy) { CyberForm.Info(this, "Une opération est en cours."); return; }
                 var tg = Sel();
-                if (tg == null && !noTarget) { CyberForm.Warn(this, "Aucun Windows hors ligne trouvé : branche le disque du PC en panne (ou démarre sur la clé AMI·OPS), puis « Actualiser »."); return; }
+                if (tg == null && !noTarget) { CyberForm.Warn(this, "Aucun Windows hors ligne trouvé : branche le disque du PC en panne (ou démarre sur la clé " + Ed.Name + "), puis « Actualiser »."); return; }
                 var d = tg != null ? tg.Drive : "";
                 if (uiOnly || (noTarget && title != "Santé des disques")) { try { go(d); } catch (Exception ex) { Out("Erreur : " + ex.Message, "bad"); } return; }
                 busy = true; UseWaitCursor = true;
@@ -331,7 +331,7 @@ namespace AmiOps
                     found = l; target.Items.Clear();
                     foreach (var t in l) target.Items.Add(t.Label);
                     if (l.Count > 0) target.SelectedIndex = 0;
-                    else info.Text = "Aucun Windows hors ligne : branche le disque du PC en panne sur ce poste, ou démarre le PC sur la clé AMI·OPS.";
+                    else info.Text = "Aucun Windows hors ligne : branche le disque du PC en panne sur ce poste, ou démarre le PC sur la clé " + Ed.Name + ".";
                 }));
             });
         }

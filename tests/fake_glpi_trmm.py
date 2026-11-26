@@ -23,6 +23,14 @@ class H(BaseHTTPRequestHandler):
         LOG.append({"m":method,"p":p,"q":u.query,"h":{k:v for k,v in self.headers.items() if k in("Authorization","Session-Token","App-Token","X-API-KEY","Content-Type")},"b":b[:4000].decode("utf-8","replace")})
         if p=="/__log": return self.send(200,LOG)
         if p=="/": return self.send(200,{"ok":1})
+        if p.startswith("/range/"):
+            body="0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n1E4C9B93F3F0682250B6CF8331B7EE68FD8:9999999\r\nFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:0"
+            b=body.encode(); self.send_response(200); self.send_header("Content-Type","text/plain"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
+        if p.startswith("/api/v3/files/"):
+            if self.headers.get("x-apikey")!="vtk": return self.send(401,{"error":"key"})
+            sha=p.rsplit("/",1)[1]
+            if sha=="a"*64: return self.send(404,{"error":{"code":"NotFoundError"}})
+            return self.send(200,{"data":{"attributes":{"meaningful_name":"evil.exe","last_analysis_stats":{"malicious":41,"suspicious":2,"undetected":20,"harmless":0}}}})
         if p.startswith("/apirest.php"):
             p=p[len("/apirest.php"):]
             if p=="/initSession": return self.send(200,{"session_token":"S1"}) if self.headers.get("Authorization")=="user_token tok" else self.send(401,["ERROR_GLPI_LOGIN","bad"])

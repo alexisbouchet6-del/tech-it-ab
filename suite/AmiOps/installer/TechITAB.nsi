@@ -1,22 +1,22 @@
-; AmiOps - installateur
+; Tech IT AB - installateur
 ; Développé by alex.b
 Unicode true
 !include "MUI2.nsh"
 
-!define APPNAME   "AMI·OPS"
-!define EXENAME   "AmiOps.exe"
-!define VERSION   "1.3.0"
+!define APPNAME   "Tech IT AB"
+!define EXENAME   "TechITAB.exe"
+!define VERSION   "1.4.0"
 !define PUBLISHER "alex.b"
-!define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\AmiOps"
+!define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\TechITAB"
 
 Name "${APPNAME} ${VERSION}"
-OutFile "..\dist\AmiOps-Setup-${VERSION}.exe"
-InstallDir "$PROGRAMFILES64\AmiOps"
+OutFile "..\dist\TechITAB-Setup-${VERSION}.exe"
+InstallDir "$PROGRAMFILES64\TechITAB"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 BrandingText "${APPNAME} ${VERSION} - by ${PUBLISHER}"
 
-VIProductVersion "1.3.0.0"
+VIProductVersion "1.4.0.0"
 VIAddVersionKey /LANG=1036 "ProductName" "${APPNAME}"
 VIAddVersionKey /LANG=1036 "CompanyName" "${PUBLISHER}"
 VIAddVersionKey /LANG=1036 "FileDescription" "Installateur ${APPNAME}"
@@ -24,10 +24,10 @@ VIAddVersionKey /LANG=1036 "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=1036 "ProductVersion" "${VERSION}"
 VIAddVersionKey /LANG=1036 "LegalCopyright" "by ${PUBLISHER} - 2026"
 
-!define MUI_ICON   "..\build\app.ico"
-!define MUI_UNICON "..\build\app.ico"
+!define MUI_ICON   "..\build\techitab.ico"
+!define MUI_UNICON "..\build\techitab.ico"
 !define MUI_ABORTWARNING
-!define MUI_WELCOMEPAGE_TEXT "AMI·OPS : la console du technicien. Fiches clients et parc, interventions avec chrono et signature, PanneScan, scan réseau, contrôle des domaines mail, coffre des identifiants AES-256, mode secours pour les PC qui ne démarrent plus, et toute la suite alex.b intégrée.$\r$\n$\r$\nDéveloppé by alex.b.$\r$\n$\r$\nPrérequis : Windows 10 / 11 (.NET Framework 4.8 inclus)."
+!define MUI_WELCOMEPAGE_TEXT "Tech IT AB : la console complète du technicien et le labo cyber. Clients, parc et GLPI, interventions, PanneScan, optimisation, dépannage, réseau, scans Nmap encadrés, chasse aux menaces, analyse d'e-mails et de liens, détection des scans, coffre AES-256.$\r$\n$\r$\nRemplace AMI·OPS : vos données sont reprises automatiquement.$\r$\n$\r$\nUsage réservé au technicien. Développé by alex.b.$\r$\n$\r$\nPrérequis : Windows 10 / 11, Nmap (nmap.org) pour les scans."
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_TEXT "Lancer ${APPNAME} maintenant"
 !define MUI_FINISHPAGE_RUN_FUNCTION LaunchAsUser
@@ -51,9 +51,15 @@ Section "${APPNAME}" SecMain
   SetRegView 64
   nsExec::Exec 'taskkill /f /im ${EXENAME}'
   Sleep 300
+  ; remplace AMI·OPS : tâche planifiée et désinstallation de l'ancienne version (les données restent dans le profil)
+  nsExec::Exec 'schtasks /Delete /TN AMI-OPS /F'
+  nsExec::Exec 'taskkill /f /im AmiOps.exe'
+  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\AmiOps" "QuietUninstallString"
+  StrCmp $0 "" +2
+  ExecWait $0
   SetOutPath "$INSTDIR"
   File "..\build\${EXENAME}"
-  File "..\build\app.ico"
+  File "/oname=app.ico" "..\build\techitab.ico"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\Outils alex.b"
   CreateShortcut "$SMPROGRAMS\Outils alex.b\${APPNAME}.lnk" "$INSTDIR\${EXENAME}" "" "$INSTDIR\app.ico" 0 SW_SHOWNORMAL "" "${APPNAME} - by alex.b"
@@ -76,7 +82,7 @@ Section "Uninstall"
   SetRegView 64
   nsExec::Exec 'taskkill /f /im ${EXENAME}'
   Sleep 300
-  nsExec::Exec 'schtasks /Delete /TN AMI-OPS /F'
+  nsExec::Exec 'schtasks /Delete /TN TechITAB /F'
   Delete "$INSTDIR\${EXENAME}"
   Delete "$INSTDIR\${EXENAME}.old"
   Delete "$INSTDIR\app.ico"

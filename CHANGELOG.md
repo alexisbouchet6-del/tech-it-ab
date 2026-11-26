@@ -1,6 +1,21 @@
-# Historique des versions — AMI·OPS
+# Historique des versions — Tech IT AB / PC Santé AB (ex-AMI·OPS)
 
 Développé by alex.b
+
+## 1.4.0 — 26/11/2026
+
+### Deux éditions
+- **Tech IT AB** remplace AMI·OPS (données reprises automatiquement, ancienne version désinstallée par le Setup).
+- **PC Santé AB** : édition client compilée sans le code sensible (Nmap, clients, parc, GLPI, coffre, Multi-PC, AD, secours) ; découverte réseau sans test de ports ; vérifiée par la CI.
+
+### Cyber (Tech IT AB)
+- Scans Nmap encadrés : périmètre et autorisation écrite par client, journal des scans, profils fixes, scripts offensifs refusés.
+- Règles de risque ANSSI/CIS/MITRE, comparaison avec le scan précédent, rapport PDF et envoi GLPI.
+- Chasse aux menaces dans les journaux, persistance, connexions, mot de passe compromis (Have I Been Pwned), fichier suspect (VirusTotal).
+- Labo défensif : analyse d'e-mail et de lien (hameçonnage, IP loggers), détection et surveillance des scans reçus, durcissement anti-scan réversible, test de sécurité d'un programme et comportement avant/après.
+
+### Corrections
+- Le mot de passe d'un programme lancé n'apparaît plus dans le journal (masquage).
 
 ## 1.3.0 — 26/11/2026
 

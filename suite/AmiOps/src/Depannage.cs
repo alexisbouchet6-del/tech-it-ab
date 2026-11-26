@@ -1,4 +1,4 @@
-// AMI·OPS - Dépannage : écrans bleus (WinDbg), réparations express, démarrage & malwares, imprimantes, licence, test de surface
+// Tech IT AB - Dépannage : écrans bleus (WinDbg), réparations express, démarrage & malwares, imprimantes, licence, test de surface
 // Développé by alex.b
 
 using System;

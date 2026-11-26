@@ -1,4 +1,4 @@
-// AMI·OPS - socle des modules techniques : page à tuiles + journal, exécution PowerShell / commandes, démarrage (autoruns)
+// Tech IT AB - socle des modules techniques : page à tuiles + journal, exécution PowerShell / commandes, démarrage (autoruns)
 // Développé by alex.b
 
 using System;
@@ -355,7 +355,7 @@ namespace AmiOps
             b("Tout vérifier sur VirusTotal", t => t.Muted, () => Vt(true));
             b("Ouvrir l'emplacement", t => t.Muted, () => { var i = g.Sel as StartItem; if (i != null && File.Exists(i.File)) Process.Start("explorer.exe", "/select,\"" + i.File + "\""); });
             b("Copier la ligne", t => t.Muted, () => { var i = g.Sel as StartItem; if (i != null) Clip.Text(i.Kind + " | " + i.Name + " | " + i.Publisher + " | " + i.Sig + " | " + i.Command); });
-            stat = new Label { Dock = DockStyle.Bottom, Height = k(40), Tag = "muted", Padding = new Padding(k(6)), Text = "Case cochée = se lance au démarrage. Désactiver est réversible (même mécanisme que le Gestionnaire des tâches ; services → démarrage manuel). « Avis » = recommandation AMI·OPS. Rouge = suspect (non signé, abonnement WMI, détecté par VirusTotal)." };
+            stat = new Label { Dock = DockStyle.Bottom, Height = k(40), Tag = "muted", Padding = new Padding(k(6)), Text = "Case cochée = se lance au démarrage. Désactiver est réversible (même mécanisme que le Gestionnaire des tâches ; services → démarrage manuel). « Avis » = recommandation " + Ed.Name + ". Rouge = suspect (non signé, abonnement WMI, détecté par VirusTotal)." };
             Controls.Add(g); Controls.Add(bar); Controls.Add(stat);
             Fill(); CyberForm.Recolor(this);
         }

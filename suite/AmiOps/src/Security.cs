@@ -1,4 +1,4 @@
-// AMI·OPS - Audit de sécurité du poste (/100, corrections) et santé Active Directory (compte verrouillé)
+// Tech IT AB - Audit de sécurité du poste (/100, corrections) et santé Active Directory (compte verrouillé)
 // Développé by alex.b
 
 using System;
@@ -124,7 +124,7 @@ namespace AmiOps
             x = Btn("Corriger la sélection", t => t.Warn, x, k(36), (s, e) => FixSel(false)).Right + k(6);
             x = Btn("Tout corriger (corrections sûres)", t => t.Accent, x, k(36), (s, e) => FixSel(true)).Right + k(6);
             x = Btn("Copier le rapport", t => t.Muted, x, k(36), (s, e) => { if (last != null) Clip.Text(Text_()); }).Right + k(6);
-            Btn("＋ Intervention avec cet audit", t => t.Muted, x, k(36), (s, e) => { if (last != null) Shell.NewIntervention(null, Text_()); });
+            Btn(Ed.Full ? "＋ Intervention avec cet audit" : "Enregistrer cet audit", t => t.Muted, x, k(36), (s, e) => { if (last != null) Shell.NewIntervention(null, Text_()); });
             score = new Label { Text = "—", AutoSize = false, Location = new Point(0, k(80)), Size = new Size(k(180), k(70)), TextAlign = ContentAlignment.MiddleCenter, Font = new Font("Consolas", 32f, FontStyle.Bold), Tag = "muted" };
             scoreSub = new Label { Text = "/ 100", AutoSize = false, Location = new Point(0, k(150)), Size = new Size(k(180), k(40)), TextAlign = ContentAlignment.TopCenter, Tag = "muted" };
             grid = new Grid { CheckBoxes = true }; grid.Col("Contrôle", 270).Col("Points", 60).Col("État", 330).Col("Recommandation", 380);
@@ -136,7 +136,7 @@ namespace AmiOps
 
         string Text_()
         {
-            var sb = new StringBuilder("AUDIT DE SÉCURITÉ " + Environment.MachineName + " : " + score.Text + "/100 (AMI·OPS)\r\n");
+            var sb = new StringBuilder("AUDIT DE SÉCURITÉ " + Environment.MachineName + " : " + score.Text + "/100 (" + Ed.Name + ")\r\n");
             foreach (var c in last) sb.AppendLine((c.Ok ? "[OK] " : "[À CORRIGER] ") + c.Name + " — " + c.State + (c.Reco.Length > 0 ? " → " + c.Reco : ""));
             return sb.ToString();
         }
@@ -181,6 +181,7 @@ namespace AmiOps
     }
 
     // ===================================================================== Active Directory
+#if !POSTE
     class AdPage : HubPage
     {
         public override string Title { get { return "Serveur AD"; } }
@@ -200,7 +201,7 @@ namespace AmiOps
         {
             int role = Role();
             if (role < 1 || role == 2) { Out("Ce poste n'est pas membre d'un domaine.", "warn"); return; }
-            if (role < 4) Out("Ce poste n'est pas un contrôleur de domaine : seuls les contrôles DNS / heure sont faits ici. Lance AMI·OPS sur un DC pour le bilan complet.", "warn");
+            if (role < 4) Out("Ce poste n'est pas un contrôleur de domaine : seuls les contrôles DNS / heure sont faits ici. Lance " + Ed.Name + " sur un DC pour le bilan complet.", "warn");
             var dom = Sh.Ps("[System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain().Name", 60000).Trim();
             Out("Domaine : " + dom, "text");
             var srv = Sh.Ps("Resolve-DnsName -Type SRV -Name ('_ldap._tcp.dc._msdcs.'+" + Sh.Q(dom) + ") -ErrorAction SilentlyContinue|?{$_.NameTarget}|%{$_.NameTarget+':'+$_.Port}", 60000).Trim();
@@ -261,4 +262,5 @@ namespace AmiOps
             });
         }
     }
+#endif
 }

@@ -149,6 +149,9 @@ namespace ScanParc
 
         static bool Open(IPAddress ip, int port, int timeout)
         {
+#if POSTE
+            return false;   // PC Santé AB : découverte seule, aucun test de port sur les autres machines
+#else
             try
             {
                 using (var c = new TcpClient())
@@ -159,11 +162,15 @@ namespace ScanParc
                 }
             }
             catch { return false; }
+#endif
         }
 
         // Titre de la page web d'administration (Yealink, Gigaset, imprimante, box, DSM…)
         static string WebTitle(IPAddress ip, int port)
         {
+#if POSTE
+            if (port >= 0) return "";
+#endif
             try
             {
                 using (var c = new TcpClient())
