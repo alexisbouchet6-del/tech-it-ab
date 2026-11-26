@@ -2,9 +2,10 @@
   Compilation Windows de la suite alex.b, de Tech IT AB et de PC Santé AB avec le compilateur Microsoft (Roslyn, Visual Studio Build Tools).
   Développé by alex.b
   Usage : pwsh -File build/build.ps1            -> exe dans out/
+          pwsh -File build/build.ps1 -Tests     -> en plus, bancs de tests console (T15 : page Jeu) pour les deux éditions
 #>
 [CmdletBinding()]
-param([string]$Out = (Join-Path (Split-Path $PSScriptRoot -Parent) 'out'))
+param([string]$Out = (Join-Path (Split-Path $PSScriptRoot -Parent) 'out'), [switch]$Tests)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 
@@ -20,8 +21,8 @@ $refs = 'mscorlib', 'System', 'System.Core', 'System.Drawing', 'System.Windows.F
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 $obj = Join-Path $Out 'obj'; if (Test-Path $obj) { Remove-Item $obj -Recurse -Force }; New-Item -ItemType Directory -Path $obj | Out-Null
 
-function Invoke-Csc([string]$Name, [string]$Icon, [string[]]$Files, [string]$Main, [string]$Define) {
-    $a = @('/nologo', '/noconfig', '/nostdlib+', '/target:winexe', '/platform:anycpu', '/optimize+', '/langversion:7.3',
+function Invoke-Csc([string]$Name, [string]$Icon, [string[]]$Files, [string]$Main, [string]$Define, [string]$Target = 'winexe') {
+    $a = @('/nologo', '/noconfig', '/nostdlib+', "/target:$Target", '/platform:anycpu', '/optimize+', '/langversion:7.3',
            '/codepage:65001', '/nowarn:649,414,169,219', "/win32icon:$Icon", "/out:$(Join-Path $Out "$Name.exe")") + $refs + $Files
     if ($Main) { $a += "/main:$Main" }
     if ($Define) { $a += "/define:$Define" }
@@ -62,6 +63,13 @@ $excl = 'Pages.cs', 'Parc.cs', 'CyberPage.cs', 'Labo.cs', 'Remote.cs', 'Secours.
 $posteSrc = $src | Where-Object { $excl -notcontains (Split-Path $_ -Leaf) }
 $posteEmb = $emb | Where-Object { (Split-Path $_ -Leaf) -match '^(DiagPoste|MaintenancePC|TestReseau|ScanParc|TriFichiers|MailCheck|netswitch|outils-vtx|powermenu|legacy)_' }
 Invoke-Csc 'PCSanteAB' (Join-Path $suite 'AmiOps\build\pcsante.ico') (@($common) + $posteSrc + $posteEmb) 'AmiOps.Program' 'POSTE'
+
+# 3. bancs de tests (option -Tests) : mêmes sources que chaque édition + le banc, en application console
+if ($Tests) {
+    $t15 = Join-Path $root 'tests\GameTests.cs'
+    Invoke-Csc 'T15-TechITAB' (Join-Path $suite 'AmiOps\build\techitab.ico') (@($common) + $src + $emb + $t15) 'AmiOps.T15' '' 'exe'
+    Invoke-Csc 'T15-PCSanteAB' (Join-Path $suite 'AmiOps\build\pcsante.ico') (@($common) + $posteSrc + $posteEmb + $t15) 'AmiOps.T15' 'POSTE' 'exe'
+}
 
 Copy-Item (Join-Path $Out 'TechITAB.exe') (Join-Path $Out 'TechITAB-portable.exe') -Force
 Copy-Item (Join-Path $Out 'PCSanteAB.exe') (Join-Path $Out 'PCSanteAB-portable.exe') -Force

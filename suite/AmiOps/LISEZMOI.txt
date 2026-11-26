@@ -55,6 +55,30 @@ NOUVEAU EN 1.1 - OUTILS TECHNIQUES
 Windows 11 : l'analyse Wi-Fi demande d'activer la localisation (Paramètres > Confidentialité > Localisation).
 VirusTotal : clé API gratuite à saisir une fois (stockée chiffrée DPAPI) ; seules les empreintes SHA-256 sont envoyées.
 
+NOUVEAU EN 1.5 - PAGE « JEU » (aussi dans PC Santé AB)
+- Analyse jeu notée sur 100 : pilote graphique (version, âge), écran réglé sous sa fréquence maximale, écran branché
+  sur la carte mère au lieu de la carte graphique, mémoire en simple canal ou sans profil XMP/EXPO, Mode Jeu,
+  enregistrement en arrière-plan, ordonnancement GPU matériel (HAGS), plan d'alimentation, souris, fichier d'échange,
+  Visual C++, périphériques en erreur, jeux sur disque dur, applis gourmandes ouvertes, Wi-Fi, pilotes Windows Update.
+- Optimiser : seulement ce qui change quelque chose sur ce PC, point de restauration d'abord, valeurs d'origine
+  gardées ; « Tout annuler » remet tout. Processeurs AMD : le plan Équilibré est conservé (exigé par
+  les Ryzen X3D à deux CCD).
+- Session de jeu : ferme proprement les applis inutiles (navigateurs, OneDrive, Teams…), jamais Windows, l'antivirus,
+  les pilotes, les lanceurs, l'anti-triche ni TeamViewer/AnyDesk ; « Rouvrir les applis » après la partie
+  (relancées sans droits administrateur).
+- Écran : passage à la fréquence maximale avec essai de 15 s et retour automatique si l'image disparaît.
+- Pilotes : version, âge, température et lien PCIe (NVIDIA), pilotes en attente dans Windows Update, outil officiel.
+- Overclocking : dit si c'est possible (processeur, carte mère, mémoire, carte graphique) et comment.
+  L'application n'applique JAMAIS d'overclocking.
+- Bibliothèque Steam / Epic (SSD ou disque dur), carte graphique dédiée forcée pour un jeu, latence réseau 30 s,
+  composants des jeux (Visual C++, DirectX) et outils reconnus installés par winget (HWiNFO, MSI Afterburner, DDU…).
+- Ce qui n'est pas fait, volontairement : overclocking automatique, réglages « placebo » (Nagle, debloat, services),
+  désactivation de Defender, des mises à jour ou de l'intégrité de la mémoire, logiciels tiers de mise à jour de pilotes.
+- Scénario « Prêt à jouer » (point de restauration, optimisations, pilotes, composants, analyse finale).
+- Correction : la sauvegarde du durcissement anti-scan (page Cyber) perdait des lignes au redémarrage de l'appli ;
+  elle est maintenant enregistrée sur une seule ligne. Après mise à jour, si un durcissement 1.4 est actif,
+  vérifier NetBIOS et le pare-feu à la main après le retour arrière.
+
 NOUVEAU EN 1.4 - CYBER ET LABO DÉFENSIF (page « Cyber »)
 Prérequis scans : Nmap installé depuis nmap.org (avec Npcap). Sa licence interdit de l'intégrer à l'exe.
 - PÉRIMÈTRE ET AUTORISATION (obligatoires) : pour chaque client, réseaux autorisés + référence du document écrit

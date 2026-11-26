@@ -15,6 +15,11 @@ CE QUE CONTIENT L'APPLICATION
 - Diagnostic réseau : Wi-Fi, box, Internet, DNS, débit, surveillance des coupures.
 - Appareils du réseau : liste des appareils connectés au réseau de ce PC (nom, adresse, fabricant),
   sans aucun test de ports.
+- Jeu : analyse notée sur 100 pour les jeux (pilote graphique, écran, mémoire, réglages Windows, applis ouvertes),
+  optimisations sûres et annulables, session de jeu qui ferme les applis inutiles puis les rouvre, écran réglé à sa
+  fréquence maximale (essai de 15 s), pilotes, bibliothèque Steam / Epic, latence réseau, composants (Visual C++,
+  DirectX) et outils reconnus. L'overclocking est seulement expliqué (possible ou non, comment) : jamais appliqué.
+- Scénarios : PC lent, écran bleu, problème réseau, prêt à jouer ; étapes enchaînées, rapport texte à la fin.
 - Outils : DiagPoste, MaintenancePC, TestReseau, TriFichiers, NetSwitch, Outils VTx, PowerMenu, raccourcis Windows.
 - Tâches : plusieurs contrôles en même temps, annulables.
 - Les diagnostics peuvent être enregistrés en rapport texte (Documents\PC Santé AB).

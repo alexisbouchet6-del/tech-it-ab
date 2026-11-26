@@ -56,14 +56,16 @@ namespace AmiOps
                 new[] { "secu", "Sécurité du PC", "note /100 et corrections" },
                 new[] { "netdiag", "Diagnostic réseau", "Wi-Fi, box, Internet, débit" },
                 new[] { "reseau", "Appareils du réseau", "liste des appareils connectés (sans test de ports)" },
+                new[] { "jeu", "Jeu : optimiser le PC", "pilotes, écran, applis ouvertes, overclocking" },
                 new[] { "outils", "Outils", "raccourcis Windows et utilitaires" },
+                new[] { "scen", "Scénarios", "PC lent, écran bleu, réseau, prêt à jouer" },
             };
             int y = k(104), x = 0;
             foreach (var t in tiles)
             {
                 var key = t[0];
                 var b = new Chip(t[1] + "\n" + t[2]) { AccentOf = th => th.Accent, Location = new Point(x, y), Size = new Size(k(330), k(64)) };
-                b.Click += (s, e) => Shell.Go(key, null); Controls.Add(b);
+                b.Click += (s, e) => { if (key == "scen") using (var sf = new ScenarioForm(Shell)) sf.ShowDialog(this); else Shell.Go(key, null); }; Controls.Add(b);
                 x += k(342); if (x + k(330) > k(1040)) { x = 0; y += k(74); }
             }
         }

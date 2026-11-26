@@ -2,6 +2,24 @@
 
 Développé by alex.b
 
+## 1.5.0 — 26/11/2026
+
+### Page « Jeu » (Tech IT AB et PC Santé AB)
+- Analyse notée sur 100 : pilote graphique (version au format NVIDIA, âge), fréquence de l'écran sous son maximum, écran branché sur la carte mère alors qu'une carte dédiée est présente, mémoire (simple canal, XMP/EXPO), Mode Jeu, enregistrement en arrière-plan, HAGS, plan d'alimentation, souris, fichier d'échange, Visual C++, périphériques en erreur, jeux sur disque dur, applis ouvertes, Wi-Fi, pilotes Windows Update.
+- Optimiser : seuls les réglages utiles sur le PC sont proposés, point de restauration, valeurs d'origine conservées (la première connue), annulation complète. Processeurs AMD : plan Équilibré conservé.
+- Session de jeu (fermeture propre, liste des processus jamais fermés) et réouverture sans droits administrateur.
+- Écran à sa fréquence maximale avec essai de 15 s et retour automatique.
+- Pilotes (NVIDIA : température, lien PCIe), overclocking expliqué mais jamais appliqué, bibliothèque Steam/Epic, carte graphique par jeu, latence réseau, composants des jeux et outils officiels via winget.
+
+### Scénarios dans PC Santé AB
+- PC lent, écran bleu, problème réseau et nouveau scénario « Prêt à jouer » (aussi dans Tech IT AB) ; rapport texte dans `Documents\PC Santé AB`.
+
+### Corrections
+- Durcissement anti-scan (1.4) : la sauvegarde des réglages d'origine tenait sur plusieurs lignes dans `config.ini` ; seule la première survivait au redémarrage de l'appli, le retour arrière ne remettait alors que LLMNR. Valeur enregistrée en base64 sur une ligne, ancien format toujours lu.
+
+### Tests
+- `tests/GameTests.cs` (T15) : 61 contrôles par édition, exécutés sous Mono et sur Windows en CI (`build.ps1 -Tests`).
+
 ## 1.4.0 — 26/11/2026
 
 ### Deux éditions

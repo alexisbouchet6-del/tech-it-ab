@@ -760,7 +760,8 @@ namespace AmiOps
         }
         void HardenPc()
         {
-            var prev = Prefs.Ini.Get("HardenPrev", "");
+            // valeur multiligne stockée en base64 (1.5) : en 1.4 seules les lignes après la première étaient perdues au redémarrage
+            var prev = string.Join("\n", IniLines.Unpack(Prefs.Ini.Get("HardenPrev", "")));
             if (prev.Length > 0)
             {
                 if (!CyberForm.Ask(this, "Durcissement anti-scan déjà appliqué le " + Prefs.Ini.Get("HardenDate", "?") + ".\nRevenir aux réglages d'avant ?")) return;
@@ -771,7 +772,7 @@ namespace AmiOps
             Jobs.Run("Durcissement anti-scan", "net", j =>
             {
                 var o = Sh.Ps(Harden.Apply, 180000);
-                Prefs.Ini.Set("HardenPrev", string.Join("\n", o.Split('\n').Select(x => x.Trim()).Where(x => x.StartsWith("PREV|")))); Prefs.Ini.Set("HardenDate", DateTime.Now.ToString("dd/MM/yyyy HH:mm")); Prefs.Save();
+                Prefs.Ini.Set("HardenPrev", IniLines.Pack(o.Split('\n').Select(x => x.Trim()).Where(x => x.StartsWith("PREV|")))); Prefs.Ini.Set("HardenDate", DateTime.Now.ToString("dd/MM/yyyy HH:mm")); Prefs.Save();
                 foreach (var l in o.Split('\n').Select(x => x.Trim()).Where(x => x.StartsWith("OK|"))) j.Log("✓ " + l.Substring(3), "ok");
             }, Out);
         }

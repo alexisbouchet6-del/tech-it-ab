@@ -8,6 +8,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -138,12 +139,16 @@ namespace AmiOps
     }
 
     // ===================================================================== Scénarios enchaînés
-#if !POSTE
     class Step { public string Name; public bool On = true; public Action<Job> Run; }
 
+    // scénarios : étapes enchaînées en tâche de fond. Tech IT AB : intervention préremplie ; PC Santé AB : rapport texte
     static class Scenarios
     {
-        public static readonly string[] Names = { "PC lent", "Écran bleu", "PC neuf", "Problème réseau", "Fin d'intervention" };
+#if POSTE
+        public static readonly string[] Names = { "PC lent", "Écran bleu", "Problème réseau", "Prêt à jouer" };
+#else
+        public static readonly string[] Names = { "PC lent", "Écran bleu", "PC neuf", "Problème réseau", "Prêt à jouer", "Fin d'intervention" };
+#endif
 
         public static List<Step> Build(string name)
         {
@@ -168,32 +173,41 @@ namespace AmiOps
                     s("Santé des disques (SMART)", j => j.Log(Optim.Bilan(false, x => { }).E.Where(e => e.Name.StartsWith("Santé du disque")).Select(e => e.Name + " : " + e.Constat).FirstOrDefault() ?? "", "text"));
                     off("DISM + SFC", j => Repair.DismSfc(j.Log));
                     break;
+#if !POSTE
                 case "PC neuf":
                     s("Préparation standard (PrépaPoste, actions recommandées)", j => PrepaDefault(j));
                     s("Audit de sécurité + corrections sûres", j => { var r = Audit.Run(x => j.Log("  " + x, "muted")); foreach (var c in r.Where(c => c.Fix != null && c.Safe)) j.Log("  " + c.Name + " : " + c.Fix(), "ok"); j.Log("Audit : " + (r.Sum(c => c.Points) * 100 / Math.Max(1, r.Sum(c => c.Max))) + "/100 avant corrections", "text"); });
                     s("Bilan final", j => j.Log(Optim.Bilan(false, x => { }).Text(), "text"));
                     break;
+#endif
                 case "Problème réseau":
                     s("Analyse Wi-Fi", j => Wifi.Analyze(j.Log));
                     s("Recherche d'un second serveur DHCP", j => NetTools.Dhcp(j.Log));
                     s("Réseau léger (DNS + renouvellement IP)", j => Repair.Network(false, j.Log));
                     s("Mesure 2 minutes box / Internet / DNS", j => QuickMonitor(j, 120));
                     break;
+                case "Prêt à jouer":
+                    s("Point de restauration", j => RestorePoint(j));
+                    s("Optimisations sûres pour le jeu (annulables)", j => { var c = GameOpt.Choices(); foreach (var x in c) if (x.Id == "restore") x.On = false; if (c.Count(x => x.On) == 0) j.Log("  déjà optimisé", "ok"); else GameOpt.Apply(c, j.Log); });
+                    s("Pilotes proposés par Windows Update", j => { string e; var u = Optim.SearchUpdates(out e); if (e != null) { j.Log(e, "warn"); return; } var d = u.Where(x => x.Type == 2).ToList(); if (d.Count == 0) j.Log("  aucun pilote en attente", "ok"); else Optim.InstallUpdates(d, j.Log); });
+                    s("Composants des jeux (Visual C++, DirectX)", j => GameOpt.Components(true, j.Log));
+                    off("Fermer les applis inutiles (navigateurs, OneDrive, Teams…)", j => GameOpt.Close(GameOpt.RunningApps().Where(a => a.Class == 1).ToList(), j.Log, () => j.Cts.IsCancellationRequested));
+                    s("Analyse jeu finale (note /100)", j => GameScan.Print(GameScan.Analyze((x, y) => { }, false), j.Log));
+                    break;
+#if !POSTE
                 case "Fin d'intervention":
                     s("Bilan du poste", j => j.Log(Optim.Bilan(false, x => { }).Text(), "text"));
                     s("Audit de sécurité (sans correction)", j => { var r = Audit.Run(x => { }); j.Log("Audit : " + (r.Sum(c => c.Points) * 100 / Math.Max(1, r.Sum(c => c.Max))) + "/100 — à corriger : " + string.Join(", ", r.Where(c => !c.Ok).Select(c => c.Name)), "text"); });
                     s("Écrans bleus et arrêts brutaux récents", j => j.Log(PanneScan.Run(7, x => { }).Text(), "text"));
                     break;
+#endif
             }
             return l;
         }
 
-        public static void RestorePoint(Job j)
-        {
-            string o; int rc = Sh.Ps("Enable-ComputerRestore -Drive ($env:SystemDrive+'\\') -ErrorAction SilentlyContinue;New-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore' -Name SystemRestorePointCreationFrequency -Value 0 -PropertyType DWord -Force|Out-Null;Checkpoint-Computer -Description 'AMI-OPS scenario' -RestorePointType MODIFY_SETTINGS", 600000, null, out o);
-            j.Log(rc == 0 ? "point de restauration créé" : "point de restauration impossible (protection système désactivée ?)", rc == 0 ? "ok" : "warn");
-        }
+        public static void RestorePoint(Job j) { Restore.Point(Ed.Name + " - scénario", j.Log); }
 
+#if !POSTE
         static void PrepaDefault(Job j)
         {
             LogBox lb = null; var f = Application.OpenForms.Count > 0 ? Application.OpenForms[0] : null;
@@ -207,6 +221,7 @@ namespace AmiOps
             }
             if (f != null) f.BeginInvoke(new Action(() => lb.Dispose()));
         }
+#endif
 
         static void QuickMonitor(Job j, int seconds)
         {
@@ -240,6 +255,18 @@ namespace AmiOps
                     lock (j.Lines) foreach (var l in j.Lines.Skip(mark).Where(l => l.Item2 == "bad" || l.Item2 == "ok" && l.Item1.Length < 160).Take(12)) sb.AppendLine("    " + l.Item1.Trim());
                 }
                 string diag; lock (j.Lines) diag = string.Join("\r\n", j.Lines.Where(l => l.Item1.StartsWith("BILAN") || l.Item1.StartsWith("PanneScan") || l.Item1.StartsWith("Audit")).Select(l => l.Item1));
+#if POSTE
+                // PC Santé AB : rapport texte dans Documents\PC Santé AB (aucune base clients)
+                var file = Path.Combine(Report.Dir, DateTime.Now.ToString("yyyy-MM-dd_HHmm") + "_scenario_" + Regex.Replace(name.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-') + ".txt");
+                try
+                {
+                    Directory.CreateDirectory(Report.Dir);
+                    File.WriteAllText(file, "SCÉNARIO « " + name + " » — " + Ed.Name + " " + Ed.Version + " · by alex.b\r\n" + Environment.MachineName + " · " + Report.WinVersion() + " · " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + " · " + (int)Math.Max(1, (DateTime.Now - j.Started).TotalMinutes) + " min\r\n\r\nÉTAPES\r\n" + sb + "\r\nRÉSUMÉ\r\n" + diag + "\r\n", new UTF8Encoding(true));
+                    j.Log("Rapport : " + file, "ok");
+                }
+                catch (Exception ex) { j.Log("Rapport non enregistré : " + ex.Message, "warn"); }
+                shell.BeginInvoke(new Action(() => shell.Notify("Scénario terminé", name + " : rapport dans Documents\\" + Ed.Name)));
+#else
                 shell.BeginInvoke(new Action(() =>
                 {
                     var it = new Intervention { Id = Store.NewId(), ClientId = clientId ?? "", Date = DateTime.Today, Tech = Prefs.Ini.Get("Tech", ""), Type = name == "PC neuf" ? "Installation / mise en service" : name == "Problème réseau" ? "Réseau / Wi-Fi" : "Dépannage",
@@ -247,32 +274,40 @@ namespace AmiOps
                     Store.D.Interventions.Add(it); try { Store.Save(); } catch { }
                     shell.Notify("Scénario terminé", name + " : intervention préremplie créée (à vérifier et clôturer).");
                 }));
+#endif
             });
         }
     }
 
     class ScenarioForm : Form
     {
-        public ScenarioForm(MainForm shell)
+        public ScenarioForm(MainForm shell) : this(shell, null) { }
+        public ScenarioForm(MainForm shell, string initial)
         {
             Func<float, int> k = Theme.S;
             Text = "Scénarios · by alex.b"; Size = new Size(k(720), k(520)); StartPosition = FormStartPosition.CenterParent; BackColor = Theme.Current.Bg; ShowInTaskbar = false; Font = new Font("Segoe UI", 9.5f);
             var top = new FlowLayoutPanel { Dock = DockStyle.Top, Height = k(48), Padding = new Padding(k(8)) };
-            var sc = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = k(220) }; sc.Items.AddRange(Scenarios.Names); sc.SelectedIndex = 0;
+            var sc = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = k(220) }; sc.Items.AddRange(Scenarios.Names); sc.SelectedIndex = Math.Max(0, Array.IndexOf(Scenarios.Names, initial));
+            top.Controls.Add(sc);
+#if !POSTE
             var cl = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = k(260) }; cl.Items.Add("(sans client)"); foreach (var c in Store.D.Clients.OrderBy(c => c.Name)) cl.Items.Add(c.Name); cl.SelectedIndex = 0;
-            top.Controls.Add(sc); top.Controls.Add(new Label { Text = "client :", AutoSize = true, Margin = new Padding(k(12), k(6), 0, 0), Tag = "muted" }); top.Controls.Add(cl);
+            top.Controls.Add(new Label { Text = "client :", AutoSize = true, Margin = new Padding(k(12), k(6), 0, 0), Tag = "muted" }); top.Controls.Add(cl);
+#endif
             var list = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, BorderStyle = BorderStyle.None, Font = new Font("Segoe UI", 10f) };
             List<Step> steps = null;
             Action load = () => { steps = Scenarios.Build((string)sc.SelectedItem); list.Items.Clear(); foreach (var s in steps) list.Items.Add(s.Name, s.On); };
             sc.SelectedIndexChanged += (s, e) => load(); load();
-            var go = new Chip("▶ Lancer le scénario (tâche de fond, intervention remplie à la fin)") { AccentOf = t => t.Ok, Dock = DockStyle.Bottom, Primary = true };
+            var go = new Chip(Ed.Full ? "▶ Lancer le scénario (tâche de fond, intervention remplie à la fin)" : "▶ Lancer le scénario (tâche de fond, rapport enregistré à la fin)") { AccentOf = t => t.Ok, Dock = DockStyle.Bottom, Primary = true };
             go.Click += (s, e) =>
             {
                 for (int i = 0; i < steps.Count; i++) steps[i].On = list.GetItemChecked(i);
                 if (!steps.Any(x => x.On)) return;
-                var client = Store.D.Clients.FirstOrDefault(c => c.Name == (string)cl.SelectedItem);
+                string clientId = null;
+#if !POSTE
+                var client = Store.D.Clients.FirstOrDefault(c => c.Name == (string)cl.SelectedItem); if (client != null) clientId = client.Id;
+#endif
                 if (!CyberForm.Ask(this, "Lancer « " + sc.SelectedItem + " » (" + steps.Count(x => x.On) + " étapes) ?\nSuivi dans la page Tâches.")) return;
-                Scenarios.Launch(shell, (string)sc.SelectedItem, steps, client != null ? client.Id : null);
+                Scenarios.Launch(shell, (string)sc.SelectedItem, steps, clientId);
                 Close(); shell.Go("taches", null);
             };
             Controls.Add(list); Controls.Add(top); Controls.Add(go);
@@ -281,7 +316,6 @@ namespace AmiOps
     }
 
     // ===================================================================== Autotest (bouton ou --selftest en ligne de commande / CI)
-#endif
 
     static class SelfTest
     {
@@ -360,6 +394,18 @@ namespace AmiOps
             add(T("Cyber : connexions", () => { var o = Sh.Ps(Poste.ConnScript, 120000); if (!Poste.Complete(o, "C")) throw new Exception("script incomplet"); int n; var f = Poste.EvalConn(o, out n); return n + " connexion(s) · " + f.Count + " constat(s)"; }));
 #endif
             add(T("Réseau : passerelle", () => { var g = ScanParc.Scanner.Gateway(); return g == null ? "N/A aucune passerelle" : g.ToString(); }));
+            add(T("Jeu : règles (pilote, overclocking, sauvegarde)", () =>
+            {
+                if (GameRules.NvidiaVersion("32.0.15.6094") != "560.94") throw new Exception("version NVIDIA");
+                string v, h; if (GameRules.CpuOc("Intel(R) Core(TM) i7-14700K", "ASUSTeK PRIME Z790-P", false, out v, out h) != 2 || GameRules.CpuOc("AMD Ryzen 7 7840HS", "", true, out v, out h) != 0) throw new Exception("overclocking");
+                if (GameRules.ParsePrev(new[] { "REG|hags|2", "REG|evil|1", "POWER|00000000-0000-0000-0000-000000000000" }).Count != 1) throw new Exception("liste blanche de restauration");
+                return "OK";
+            }));
+            add(T("Jeu : lecture du matériel", () =>
+            {
+                var g = GameScan.Gpus(); var d = GameScan.Displays(); int m, t, sp, c; long mb; GameScan.Ram(out m, out mb, out t, out sp, out c);
+                return g.Count + " GPU (" + string.Join(", ", g.Select(x => x.Name + " " + x.Kind)) + ") · " + d.Count + " écran(s) " + string.Join(", ", d.Select(x => x.Hz + "/" + x.MaxHz + " Hz")) + " · " + m + " module(s) " + GameRules.RamTypeName(t) + " " + c + " MT/s · " + (GameScan.Laptop() ? "portable" : "fixe");
+            }));
             if (full)
             {
                 add(T("Windows Update : recherche", () => { string e; var u = Optim.SearchUpdates(out e); if (e != null) throw new Exception(e); return u.Count + " en attente (" + u.Count(x => x.Type == 2) + " pilotes)"; }));

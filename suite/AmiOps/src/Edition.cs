@@ -13,6 +13,6 @@ namespace AmiOps
         public const string Name = "Tech IT AB", Id = "TechITAB", Asset = "TechITAB-portable.exe", Tagline = "Console du technicien et labo cyber";
         public const bool Full = true;
 #endif
-        public const string Version = "1.4.0";
+        public const string Version = "1.5.0";
     }
 }

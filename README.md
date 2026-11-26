@@ -9,7 +9,7 @@ Deux applications Windows compilées à partir du même code :
 | Édition | Public | Contenu |
 |---|---|---|
 | **Tech IT AB** | Le technicien (usage interne, labos) | Console complète : clients et parc, interventions, GLPI et Tactical RMM, diagnostic et dépannage, réseau, coffre chiffré, Multi-PC, Active Directory, secours, **cyber** (scans Nmap encadrés, chasse aux menaces, labo défensif). Remplace AMI·OPS et reprend ses données. |
-| **PC Santé AB** | Le client, pour son propre poste | Santé et dépannage du PC uniquement : optimisation, PanneScan, dépannage, sécurité du poste, diagnostic réseau, appareils du réseau local (sans test de ports), outils. |
+| **PC Santé AB** | Le client, pour son propre poste | Santé et dépannage du PC uniquement : optimisation, PanneScan, dépannage, sécurité du poste, diagnostic réseau, appareils du réseau local (sans test de ports), page Jeu, scénarios, outils. |
 
 **Cloisonnement.** PC Santé AB est compilé avec le symbole `POSTE` à partir d'une liste blanche de fichiers : le code de Nmap, des clients, du parc, de GLPI, du coffre, du Multi-PC, de l'Active Directory et du secours n'est pas masqué, il est **absent de l'exécutable**. La CI le vérifie à chaque compilation (inspection des types de `PCSanteAB.exe`).
 
@@ -30,12 +30,13 @@ Deux applications Windows compilées à partir du même code :
 |---|---|
 | Clients et interventions | Fiches clients (contacts, parc), interventions chronométrées, rapport, suivi du temps, ticket GLPI en un clic |
 | Centre des tâches | Jusqu'à 4 actions en parallèle, avec exclusion automatique des actions incompatibles (Windows Update, réseau, spouleur, antivirus, indexation) ; l'annulation arrête le programme en cours et ses processus enfants |
-| Scénarios | Enchaînements prêts à l'emploi : PC lent, écran bleu, PC neuf, problème réseau, fin d'intervention ; chaque scénario crée l'intervention correspondante |
+| Scénarios | Enchaînements prêts à l'emploi : PC lent, écran bleu, PC neuf, problème réseau, prêt à jouer, fin d'intervention ; Tech IT AB crée l'intervention correspondante, PC Santé AB enregistre un rapport texte (sans PC neuf ni fin d'intervention) |
 | Optimisation | Bilan noté sur 10 par élément (mises à jour, pilotes, démarrage, disque, sécurité, performances) avec préconisations ; nettoyage, mises à jour Windows, gestion du démarrage |
 | Dépannage | Réparations courantes (DISM/SFC, spouleur, Windows Update, Outlook en mode sans échec, réseau), analyse des écrans bleus, PanneScan des journaux |
 | Réseau | Diagnostic, surveillance Wi-Fi, débit, DHCP, test SMTP, scan du parc (ScanParc), vérification d'un domaine mail (MailCheck) |
 | Sécurité | Audit noté avec correctifs proposés (dont version de Windows 11 26H2), état de l'antivirus |
 | Serveur AD | Opérations courantes Active Directory |
+| Jeu (les deux éditions) | Analyse notée sur 100 (pilote graphique, fréquence et branchement de l'écran, mémoire simple canal ou sans XMP/EXPO, Mode Jeu, enregistrement en arrière-plan, HAGS, alimentation, souris, Visual C++, jeux sur disque dur, applis ouvertes), optimisations réversibles avec point de restauration, session de jeu (fermeture propre des applis inutiles puis réouverture sans droits administrateur), fréquence maximale de l'écran avec retour automatique, pilotes, détection des possibilités d'overclocking (jamais appliqué), bibliothèque Steam/Epic, carte graphique par jeu, latence, composants et outils officiels via winget |
 | Cyber (Tech IT AB) | Scans Nmap limités au périmètre autorisé de chaque client (autorisation écrite datée, journal des scans, scripts offensifs refusés), règles de risque ANSSI/CIS/MITRE, comparaison entre scans, chasse aux menaces dans les journaux, persistance, connexions, mot de passe compromis (k-anonymat), fichier suspect (VirusTotal par empreinte), rapport PDF |
 | Labo défensif (Tech IT AB) | Analyse d'e-mail (hameçonnage), analyse de lien (IP loggers, sosies de domaines) sans l'ouvrir, détection des scans de ports reçus (journal du pare-feu), durcissement anti-scan réversible, test de sécurité d'un programme (signature, ASLR, DEP, CFG) et comportement avant/après |
 | Parc client (projet GLPI) | Recette de livraison (rapport du kit USB, nommage, licences, BitLocker, agents GLPI et Tactical RMM, Kaspersky, mises à jour), PV signé envoyé dans GLPI, enrôlement d'un PC existant, état du parc par client, rapport mensuel de conformité, NAS → GLPI, tickets GLPI (suivi, tâche avec temps, résolution) |
@@ -93,8 +94,9 @@ Get-Content .\autotest.txt
 Prérequis : Visual Studio 2022 Build Tools avec la charge de travail « Développement .NET Desktop ».
 
 ```powershell
-pwsh -File build/build.ps1      # exécutables dans out\ + SHA256SUMS.txt
-pwsh -File build/selftest.ps1   # autotest, code de sortie = nombre d'échecs
+pwsh -File build/build.ps1          # exécutables dans out\ + SHA256SUMS.txt
+pwsh -File build/build.ps1 -Tests   # en plus : bancs T15 (page Jeu) des deux éditions, out\T15-*.exe
+pwsh -File build/selftest.ps1       # autotest, code de sortie = nombre d'échecs
 ```
 
 ### Tests des connecteurs (Linux, Mono)
@@ -106,6 +108,8 @@ cd tests && openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.
 python3 fake_glpi_trmm.py 8443 &
 # compiler ParcTests.cs avec les sources (voir suite/AmiOps/build-editions.sh, -main:AmiOps.T13 ou -main:AmiOps.T14 + -r:System.Xml) puis : mono t13.exe ; mono t14.exe (vrai Nmap requis)
 ```
+
+`tests/GameTests.cs` (T15, `-main:AmiOps.T15`) vérifie les règles de la page Jeu : reconnaissance des cartes graphiques, version NVIDIA, overclocking possible ou non, mémoire, bibliothèque Steam, liste des processus jamais fermés, note, liste blanche de restauration (lignes trafiquées ignorées), optimisation puis annulation dans le registre. Il se compile pour chaque édition et tourne aussi sur Windows en CI.
 
 ### Sous Linux (Mono)
 
@@ -121,14 +125,14 @@ Le workflow `.github/workflows/ci.yml` s'exécute à chaque push et pull request
 
 1. recherche de secrets (gitleaks) dans les commits poussés ;
 2. compilation sur `windows-latest` avec le compilateur Roslyn ;
-3. autotest des deux éditions sur un vrai Windows et vérification du cloisonnement de PC Santé AB ;
+3. bancs T15 (page Jeu) puis autotest des deux éditions sur un vrai Windows, et vérification du cloisonnement de PC Santé AB ;
 4. analyse PowerShell (PSScriptAnalyzer) ;
 5. sur un tag `v*` : signature (si les secrets `SIGN_PFX_BASE64` et `SIGN_PFX_PASSWORD` sont définis), empreintes SHA-256 et publication de la version.
 
 Publier une version :
 
 ```bash
-git tag v1.4.0 && git push origin v1.4.0
+git tag v1.5.0 && git push origin v1.5.0
 ```
 
 ## Architecture
@@ -178,6 +182,8 @@ Choix techniques :
 | Réseaux des clients | Scans Nmap | Scan non autorisé, détournement de l'outil | Périmètre par client + autorisation écrite datée (12 mois), refus hors périmètre (noms résolus et vérifiés avant Nmap), plus de 65 536 adresses refusées, profils fixes, scripts offensifs refusés, journal `cyber-audit.log` |
 | Postes des clients | PC Santé AB | Usage malveillant par un tiers | Fonctions sensibles absentes de l'exécutable (compilation par liste blanche), découverte réseau sans test de ports, aucune donnée stockée |
 | Mot de passe testé | Have I Been Pwned | Fuite du mot de passe | k-anonymat : 5 caractères de l'empreinte SHA-1 envoyés, réponse avec bourrage |
+| Réglages du PC (page Jeu) | Sauvegarde des valeurs d'origine dans `config.ini`, modifiable par l'utilisateur alors que l'appli tourne en administrateur | Écriture détournée dans le registre ou lancement de commandes à la restauration | Liste blanche stricte : 6 valeurs de registre nommées (seule `HwSchMode` en HKLM, valeurs 0 à 2), plans d'alimentation Windows connus, préférences GPU limitées à des chemins `.exe` validés ; toute autre ligne est ignorée |
+| Applis fermées (session de jeu) | Liste des applis à rouvrir | Lancement d'un programme avec les droits administrateur | Relance par l'Explorateur, donc avec les droits de l'utilisateur connecté ; chemins `.exe` existants uniquement |
 | Données clients | `amiops.json` | Fuite via le dépôt Git | Données hors du dépôt (`%LOCALAPPDATA%`), `.gitignore`, scan gitleaks en CI |
 | Clés BitLocker | Séquestre à la livraison | Lecture par tout technicien ayant accès à GLPI | Clé stockée uniquement dans le coffre chiffré ; GLPI ne reçoit que l'identifiant de la clé (dans le PV) |
 | Lien de déploiement Tactical RMM | Enrôlement | Installation d'agents non autorisés | Stocké chiffré (DPAPI) par client, https et domaine du serveur Tactical RMM imposés |
@@ -192,6 +198,8 @@ Fichiers à ne jamais pousser : certificats (`*.pfx`), `.env`, fichiers de donn�
 
 - Les fonctions dépendantes de Windows (WMI, journaux d'événements, Windows Update, Defender, réparations, Active Directory, WinRM, connecteurs) sont validées par l'autotest en CI et par les essais sur poste réel ; elles ne sont pas exécutables sous Mono.
 - L'exécutable n'est signé que si un certificat de signature de code est configuré.
+- Page Jeu : la lecture du matériel (cartes graphiques, écrans, mémoire, carte mère) passe par WMI et l'API Win32 ; elle est testée en CI sur un Windows sans carte graphique ni Steam. Le comportement sur un PC de jeu réel (NVIDIA, AMD, Intel Arc, écran 144 Hz) reste à valider sur poste.
+- L'overclocking n'est jamais appliqué par l'application, volontairement : AMD et Intel excluent de la garantie les dommages hors spécifications.
 - L'interface fonctionne avec un seul processus administrateur ; une séparation interface standard / moteur administrateur n'est pas implémentée.
 
 ## Licence

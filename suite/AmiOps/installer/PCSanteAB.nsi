@@ -5,7 +5,7 @@ Unicode true
 
 !define APPNAME   "PC Santé AB"
 !define EXENAME   "PCSanteAB.exe"
-!define VERSION   "1.4.0"
+!define VERSION   "1.5.0"
 !define PUBLISHER "alex.b"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PCSanteAB"
 
@@ -16,7 +16,7 @@ RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 BrandingText "${APPNAME} ${VERSION} - by ${PUBLISHER}"
 
-VIProductVersion "1.4.0.0"
+VIProductVersion "1.5.0.0"
 VIAddVersionKey /LANG=1036 "ProductName" "${APPNAME}"
 VIAddVersionKey /LANG=1036 "CompanyName" "${PUBLISHER}"
 VIAddVersionKey /LANG=1036 "FileDescription" "Installateur ${APPNAME}"

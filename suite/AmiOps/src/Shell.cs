@@ -302,9 +302,8 @@ namespace AmiOps
 #if !POSTE
             act("Compte AD verrouillé", "quel PC le bloque", () => shell.Go("ad", null));
 #endif
-#if !POSTE
-            act("Scénarios (PC lent, écran bleu, PC neuf…)", "étapes enchaînées en tâche de fond", () => { using (var sf = new ScenarioForm(shell)) sf.ShowDialog(shell); });
-#endif
+            act(Ed.Full ? "Scénarios (PC lent, écran bleu, PC neuf…)" : "Scénarios (PC lent, écran bleu, réseau, jeu)", "étapes enchaînées en tâche de fond", () => { using (var sf = new ScenarioForm(shell)) sf.ShowDialog(shell); });
+            act("Jeu : optimiser le PC pour les jeux", "analyse /100, pilotes, écran, applis, overclocking", () => shell.Go("jeu", null));
             act("Tâches en cours", "centre des tâches", () => shell.Go("taches", null));
 #if !POSTE
             act("Multi-PC", "même action sur plusieurs PC (WinRM ou Tactical RMM)", () => shell.Go("multi", null));
@@ -393,6 +392,7 @@ namespace AmiOps
                 new[] { "depann", Theme.Icon("", "⚒"), "Dépannage" },
                 new[] { "reseau", Theme.Icon("", "⇄"), "Scan réseau" },
                 new[] { "netdiag", Theme.Icon("", "≋"), "Diagnostic réseau" },
+                new[] { "jeu", Theme.Icon("\uE7FC", "▶"), "Jeu" },
                 new[] { "multi", Theme.Icon("", "⧉"), "Multi-PC" },
                 new[] { "mail", Theme.Icon("", "✉"), "Messagerie" },
                 new[] { "secu", Theme.Icon("", "⛨"), "Sécurité" },
@@ -407,14 +407,14 @@ namespace AmiOps
             };
 #if POSTE
             // PC Santé AB : santé et informatique du PC uniquement
-            defs = defs.Where(d => new[] { "accueil", "taches", "panne", "optim", "depann", "reseau", "netdiag", "secu", "outils", "params" }.Contains(d[0])).ToArray();
+            defs = defs.Where(d => new[] { "accueil", "taches", "panne", "optim", "depann", "reseau", "netdiag", "jeu", "secu", "outils", "params" }.Contains(d[0])).ToArray();
 #endif
             int y = k(6);
             foreach (var d in defs)
             {
-                var n = new Nav(d[0], d[1], d[2]) { Location = new Point(0, y), Width = k(212), Height = k(Ed.Full ? 28 : 30) };
+                var n = new Nav(d[0], d[1], d[2]) { Location = new Point(0, y), Width = k(212), Height = k(Ed.Full ? 27 : 30) };
                 n.Click += (s, e) => Go(((Nav)s).Key, null);
-                side.Controls.Add(n); navs.Add(n); y += k(Ed.Full ? 29 : 31);   // 23 onglets dans Tech IT AB : pas resserré
+                side.Controls.Add(n); navs.Add(n); y += k(Ed.Full ? 28 : 31);   // 24 onglets dans Tech IT AB : pas resserré
             }
             lRun = new Label { AutoSize = false, Location = new Point(k(14), y + k(14)), Size = new Size(k(190), k(60)), Tag = "ok", Font = new Font("Consolas", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
 #if !POSTE
@@ -427,13 +427,13 @@ namespace AmiOps
 
 #if POSTE
             Register(new PosteHome()); Register(new PannePage()); Register(new ReseauPage()); Register(new ToolsPage()); Register(new SettingsPage());
-            Register(new OptimPage()); Register(new DepannPage()); Register(new NetDiagPage()); Register(new SecuPage()); Register(new TasksPage());
+            Register(new OptimPage()); Register(new DepannPage()); Register(new NetDiagPage()); Register(new SecuPage()); Register(new TasksPage()); Register(new JeuPage());
 #else
             Register(new HomePage()); Register(new ClientsPage()); Register(new InterventionsPage()); Register(new PannePage());
             Register(new ReseauPage()); Register(new MailPage()); Register(new VaultPage()); Register(new TempsPage());
             Register(new ToolsPage()); Register(new SecoursPage()); Register(new SettingsPage());
             Register(new OptimPage()); Register(new DepannPage()); Register(new NetDiagPage()); Register(new SecuPage()); Register(new AdPage());
-            Register(new TasksPage()); Register(new MultiPage()); Register(new ConnectPage()); Register(new ParcPage()); Register(new CyberPage());
+            Register(new TasksPage()); Register(new MultiPage()); Register(new ConnectPage()); Register(new ParcPage()); Register(new CyberPage()); Register(new JeuPage());
 #endif
 
             var tick = new Timer { Interval = 1000 };
@@ -508,12 +508,12 @@ namespace AmiOps
 #if POSTE
             if (p is PosteHome) return "accueil"; if (p is PannePage) return "panne"; if (p is ReseauPage) return "reseau"; if (p is ToolsPage) return "outils";
             if (p is OptimPage) return "optim"; if (p is DepannPage) return "depann"; if (p is NetDiagPage) return "netdiag"; if (p is SecuPage) return "secu"; if (p is TasksPage) return "taches";
-            return "params";
+            if (p is JeuPage) return "jeu"; return "params";
 #else
             if (p is HomePage) return "accueil"; if (p is ClientsPage) return "clients"; if (p is InterventionsPage) return "interv"; if (p is PannePage) return "panne";
             if (p is ReseauPage) return "reseau"; if (p is MailPage) return "mail"; if (p is VaultPage) return "coffre"; if (p is TempsPage) return "temps";
             if (p is ParcPage) return "parc"; if (p is CyberPage) return "cyber"; if (p is TasksPage) return "taches"; if (p is MultiPage) return "multi"; if (p is ConnectPage) return "connect"; if (p is OptimPage) return "optim"; if (p is DepannPage) return "depann"; if (p is NetDiagPage) return "netdiag"; if (p is SecuPage) return "secu"; if (p is AdPage) return "ad";
-            if (p is ToolsPage) return "outils"; if (p is SecoursPage) return "secours"; return "params";
+            if (p is ToolsPage) return "outils"; if (p is SecoursPage) return "secours"; if (p is JeuPage) return "jeu"; return "params";
 #endif
         }
 

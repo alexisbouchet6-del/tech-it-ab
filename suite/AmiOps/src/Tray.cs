@@ -41,9 +41,7 @@ namespace AmiOps
             else m.Items.Add("▶ Nouvelle intervention (chrono)", null, (s, e) => { Show(f); f.NewIntervention(null); });
 #endif
             int run = Jobs.Running; m.Items.Add("Tâches" + (run > 0 ? " (" + run + " en cours)" : ""), null, (s, e) => { Show(f); f.Go("taches", null); });
-#if !POSTE
             m.Items.Add("Scénarios…", null, (s, e) => { Show(f); using (var sf = new ScenarioForm(f)) sf.ShowDialog(f); });
-#endif
             m.Items.Add(new ToolStripSeparator());
 
             // réseau rapide (moteur NetSwitch, même configuration que l'appli NetSwitch)
