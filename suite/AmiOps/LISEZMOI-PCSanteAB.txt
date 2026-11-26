@@ -22,6 +22,12 @@ CE QUE CONTIENT L'APPLICATION
 - Scénarios : PC lent, écran bleu, problème réseau, prêt à jouer ; étapes enchaînées, rapport texte à la fin.
 - Outils : DiagPoste, MaintenancePC, TestReseau, TriFichiers, NetSwitch, Outils VTx, PowerMenu, raccourcis Windows.
 - Tâches : plusieurs contrôles en même temps, annulables.
+- Supervision (optionnelle, par ton prestataire) : si ce poste est enrôlé avec un code client (Paramètres >
+  « Supervision par mon prestataire »), un bandeau indique qu'il est supervisé et un état technique est envoyé au
+  serveur GLPI du prestataire (nom du PC, série, Windows, disque, antivirus, bilan) — aucun contenu personnel,
+  aucun jeton. Sans enrôlement, l'application ne contacte personne.
+- Protection : au démarrage, l'application vérifie sa signature ; une copie modifiée ou re-signée par un tiers
+  passe en « copie non autorisée » (bandeau rouge, supervision désactivée).
 - Les diagnostics peuvent être enregistrés en rapport texte (Documents\PC Santé AB).
 
 INSTALLATION

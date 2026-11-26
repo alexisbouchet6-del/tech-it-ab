@@ -310,8 +310,11 @@ namespace AmiOps
 #endif
 #if !POSTE
             act("Connecteurs GLPI / Tactical RMM", "synchronisation, agents", () => shell.Go("connect", null));
-            act("Cyber : scan Nmap", "périmètre autorisé du client", () => shell.Go("cyber", null));
-            act("Cyber : chasse aux menaces", "journaux, persistance, connexions", () => shell.Go("cyber", null));
+            if (Authenticity.Trusted)
+            {
+                act("Cyber : scan Nmap", "périmètre autorisé du client", () => shell.Go("cyber", null));
+                act("Cyber : chasse aux menaces", "journaux, persistance, connexions", () => shell.Go("cyber", null));
+            }
             act("Parc client : recette de livraison", "contrôle du PC avant remise au client", () => shell.Go("parc", null));
             act("Parc client : état du parc", "GLPI + Tactical RMM", () => shell.Go("parc", null));
 #endif
@@ -369,7 +372,7 @@ namespace AmiOps
         readonly Panel side, host;
         readonly Dictionary<string, Page> pages = new Dictionary<string, Page>();
         readonly List<Nav> navs = new List<Nav>();
-        readonly Label lRun, lVault;
+        readonly Label lRun, lVault, banner;
         string current;
 
         public MainForm() : base(Ed.Name, 1380, 880)
@@ -379,6 +382,14 @@ namespace AmiOps
             side = new Panel { Dock = DockStyle.Left, Width = k(212) };
             host = new Panel { Dock = DockStyle.Fill, Padding = new Padding(k(16), k(6), k(16), k(10)) };
             Body.Controls.Add(host); Body.Controls.Add(side);
+            // bandeau : copie non autorisée (prioritaire), sinon poste supervisé — ajouté en dernier pour occuper tout le haut
+            var warn = Authenticity.Banner; var bnr = warn ?? Superv.Banner;
+            if (bnr != null)
+            {
+                banner = new Label { Dock = DockStyle.Top, Height = k(26), Text = "   " + bnr, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 9f, FontStyle.Bold), AutoEllipsis = true,
+                    ForeColor = warn != null ? Color.White : Theme.Current.Bg, BackColor = Authenticity.State == Authenticity.Tampered ? Theme.Current.Bad : warn != null ? Theme.Current.Warn : Theme.Current.Accent };
+                Body.Controls.Add(banner);
+            }
 
             var defs = new[]
             {
@@ -409,6 +420,8 @@ namespace AmiOps
             // PC Santé AB : santé et informatique du PC uniquement
             defs = defs.Where(d => new[] { "accueil", "taches", "panne", "optim", "depann", "reseau", "netdiag", "jeu", "secu", "outils", "params" }.Contains(d[0])).ToArray();
 #endif
+            // copie non authentique : le cyber/labo (Tech IT AB) est masqué (fonctions sensibles désactivées)
+            if (!Authenticity.Trusted) defs = defs.Where(d => d[0] != "cyber").ToArray();
             int y = k(6);
             foreach (var d in defs)
             {
@@ -450,6 +463,8 @@ namespace AmiOps
             Store.Changed += () => { if (IsHandleCreated) BeginInvoke(new Action(Tick)); };
             Go(Program.Secours ? "secours" : "accueil", null);
             Tick();
+            // supervision : un état par jour au démarrage (silencieux), si le poste est enrôlé, l'exe authentique et l'utilisateur consentant
+            if (Superv.Active) System.Threading.Tasks.Task.Run(() => Superv.Heartbeat());
             TrayHost.Create(this);
             if (Program.StartHidden) { WindowState = FormWindowState.Minimized; ShowInTaskbar = false; Shown += (s, e) => { Hide(); ShowInTaskbar = true; WindowState = FormWindowState.Normal; }; }
             FormClosing += (s, e) =>

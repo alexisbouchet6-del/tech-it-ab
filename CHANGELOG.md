@@ -2,6 +2,25 @@
 
 Développé by alex.b
 
+## 1.6.0 — 26/11/2026
+
+### Protection « sous mon nom » (anti-copie)
+- Contrôle d'authenticité au démarrage : l'exe vérifie sa propre signature Authenticode (WinVerifyTrust) contre l'empreinte épinglée d'alex.b (`Ed.SignThumb`). États : authentique / non signée / altérée.
+- Une copie modifiée, recompilée ou re-signée par un tiers (« rebranding via une IA ») passe en « copie non autorisée » : bandeau et désactivation des fonctions sensibles (Cyber, labo, supervision).
+- Honnêteté : garde-fou contournable par un reverse-engineer déterminé ; la protection réelle reste la signature du certificat + le dépôt source privé.
+
+### Supervision des postes clients (opt-in, modèle agent GLPI)
+- PC Santé AB enrôlé par code client envoie un état technique (nom du PC, série, modèle, Windows, disque, antivirus, bilan) à l'endpoint d'inventaire GLPI d'alex.b, **sans aucun jeton d'admin** (comme un agent GLPI, étiquette = code client).
+- Opt-in et visible : bandeau permanent « poste supervisé par alex.b » + acceptation de l'utilisateur ; sans enrôlement, aucune remontée (cloisonnement préservé).
+- Battement quotidien au démarrage + envoi manuel depuis l'accueil.
+- Tech IT AB : « Postes supervisés » dans Parc client relit les états reçus avec le jeton d'alex.b (sa machine uniquement).
+
+### Interne
+- Helper HTTP déplacé dans un fichier partagé par les deux éditions.
+
+### Tests
+- `tests/SupervTests.cs` (T16) : 19 contrôles (Tech IT AB) / 18 (PC Santé AB), exécutés sous Mono et sur Windows en CI.
+
 ## 1.5.0 — 26/11/2026
 
 ### Page « Jeu » (Tech IT AB et PC Santé AB)

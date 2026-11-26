@@ -69,6 +69,9 @@ if ($Tests) {
     $t15 = Join-Path $root 'tests\GameTests.cs'
     Invoke-Csc 'T15-TechITAB' (Join-Path $suite 'AmiOps\build\techitab.ico') (@($common) + $src + $emb + $t15) 'AmiOps.T15' '' 'exe'
     Invoke-Csc 'T15-PCSanteAB' (Join-Path $suite 'AmiOps\build\pcsante.ico') (@($common) + $posteSrc + $posteEmb + $t15) 'AmiOps.T15' 'POSTE' 'exe'
+    $t16 = Join-Path $root 'tests\SupervTests.cs'
+    Invoke-Csc 'T16-TechITAB' (Join-Path $suite 'AmiOps\build\techitab.ico') (@($common) + $src + $emb + $t16) 'AmiOps.T16' '' 'exe'
+    Invoke-Csc 'T16-PCSanteAB' (Join-Path $suite 'AmiOps\build\pcsante.ico') (@($common) + $posteSrc + $posteEmb + $t16) 'AmiOps.T16' 'POSTE' 'exe'
 }
 
 Copy-Item (Join-Path $Out 'TechITAB.exe') (Join-Path $Out 'TechITAB-portable.exe') -Force

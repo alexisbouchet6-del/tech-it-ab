@@ -575,7 +575,8 @@ namespace AmiOps
             x2 = Btn("Rapport mensuel", t => t.Accent, x2, y2, (s, e) => MonthlyOne()).Right + k(6);
             x2 = Btn("Rapports de tous les clients", t => t.Muted, x2, y2, (s, e) => MonthlyAll()).Right + k(6);
             x2 = Btn("Tickets GLPI du client", t => t.Accent, x2, y2, (s, e) => Tickets()).Right + k(6);
-            Btn("NAS → GLPI", t => t.Warn, x2, y2, (s, e) => NasToGlpi());
+            x2 = Btn("NAS → GLPI", t => t.Warn, x2, y2, (s, e) => NasToGlpi()).Right + k(6);
+            Btn("Postes supervisés (PC Santé AB)", t => t.Accent2, x2, y2, (s, e) => Supervised());
             stat = Lbl("", 0, k(120), "muted");
             grid = new Grid(); grid.Location = new Point(0, k(142)); Controls.Add(grid);
             box = new LogBox(); Controls.Add(box);
@@ -605,6 +606,30 @@ namespace AmiOps
         void Out(string s, string c) { Ui(() => box.Line(s, c)); var j = Job.Current; if (j != null) j.Record(s, c); }
         void Ui(Action a) { try { if (IsHandleCreated) BeginInvoke(a); } catch { } }
         static Color Col(string st) { var t = Theme.Current; return st == "ok" ? t.Ok : st == "warn" ? t.Warn : st == "bad" ? t.Bad : t.Muted; }
+
+        // ---- Postes supervisés (remontés par PC Santé AB chez les clients, lus avec le jeton GLPI d'alex.b)
+        void Supervised()
+        {
+            if (!Glpi.Configured) { CyberForm.Info(this, "Configure GLPI dans Connecteurs."); return; }
+            var c = Cur(); if (c == null) return;
+            if (c.GlpiEntity == 0) { CyberForm.Info(this, "Ce client n'est pas lié à une entité GLPI (lance la synchronisation)."); return; }
+            Start("Postes supervisés de " + c.Name, () =>
+            {
+                var rows = Superv.Read(c.GlpiEntity);
+                Ui(() =>
+                {
+                    if (rows.Count == 0) { box.Line("Aucun poste supervisé par PC Santé AB dans cette entité (ou aucun état reçu).", "muted"); return; }
+                    var g = new Grid { Dock = DockStyle.Fill }; g.Col("Poste", 180).Col("N° série", 150).Col("Dernier état envoyé par le client", 520).Col("Reçu le", 140);
+                    foreach (var r in rows) g.Items.Add(new ListViewItem(new[] { r.Pc, r.Serial, r.Etat, r.Last.Year > 2000 ? r.Last.ToString("dd/MM/yyyy HH:mm") : "?" }));
+                    using (var f = new Form { Text = "Postes supervisés — " + c.Name + " · by alex.b", Size = new Size(k(1040), k(520)), StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Current.Bg, ShowInTaskbar = false })
+                    {
+                        var info = new Label { Dock = DockStyle.Top, Height = k(30), Tag = "muted", Text = "  " + rows.Count + " poste(s) supervisé(s). L'état complet (disque, OS, antivirus) est aussi dans la fiche GLPI du PC." };
+                        f.Controls.Add(g); f.Controls.Add(info); CyberForm.Recolor(f); f.ShowDialog(this);
+                    }
+                });
+            });
+        }
+        void Start(string title, Action go) { box.Line("▶ " + title + "…", "accent", true); Jobs.Run(title, null, j => go()); }
 
         // ---- A
         void RunRecette()

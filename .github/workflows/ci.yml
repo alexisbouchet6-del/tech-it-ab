@@ -30,12 +30,14 @@ jobs:
       - name: Compilation (Roslyn) + bancs de tests
         shell: pwsh
         run: ./build/build.ps1 -Tests
-      - name: Tests de la page Jeu (T15) sur un vrai Windows
+      - name: Tests page Jeu (T15) et authenticité/supervision (T16) sur un vrai Windows
         shell: pwsh
         run: |
           ./out/T15-TechITAB.exe | Tee-Object -FilePath out/t15-techitab.txt; $a = $LASTEXITCODE
           ./out/T15-PCSanteAB.exe | Tee-Object -FilePath out/t15-pcsanteab.txt; $b = $LASTEXITCODE
-          if ($a -ne 0 -or $b -ne 0) { Write-Error "T15 : $a KO (Tech IT AB), $b KO (PC Santé AB)"; exit 1 }
+          ./out/T16-TechITAB.exe | Tee-Object -FilePath out/t16-techitab.txt; $c = $LASTEXITCODE
+          ./out/T16-PCSanteAB.exe | Tee-Object -FilePath out/t16-pcsanteab.txt; $d = $LASTEXITCODE
+          if ($a -ne 0 -or $b -ne 0 -or $c -ne 0 -or $d -ne 0) { Write-Error "Tests KO — T15: $a/$b, T16: $c/$d"; exit 1 }
       - name: Autotest Tech IT AB (lecture seule)
         shell: pwsh
         run: ./build/selftest.ps1 -Exe out/TechITAB.exe
@@ -68,6 +70,7 @@ jobs:
             out/SHA256SUMS.txt
             out/autotest-*.txt
             out/t15-*.txt
+            out/t16-*.txt
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')

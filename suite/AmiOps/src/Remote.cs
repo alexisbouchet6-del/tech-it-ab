@@ -15,35 +15,7 @@ using AlexB;
 
 namespace AmiOps
 {
-    // ===================================================================== HTTP JSON (TLS vérifié, jamais contourné)
-    static class Http
-    {
-        public static object Call(string method, string url, Dictionary<string, string> headers, object body, int timeoutMs = 30000)
-        {
-            var req = (HttpWebRequest)WebRequest.Create(url);
-            req.Method = method; req.Timeout = timeoutMs; req.UserAgent = "AmiOps/" + AppInfo.Version; req.Accept = "application/json";
-            if (headers != null) foreach (var h in headers) req.Headers[h.Key] = h.Value;
-            if (body != null)
-            {
-                var b = Encoding.UTF8.GetBytes(body as string ?? Store.Json().Serialize(body));
-                req.ContentType = "application/json"; req.ContentLength = b.Length;
-                using (var s = req.GetRequestStream()) s.Write(b, 0, b.Length);
-            }
-            try
-            {
-                using (var r = (HttpWebResponse)req.GetResponse()) using (var sr = new StreamReader(r.GetResponseStream(), Encoding.UTF8))
-                { var t = sr.ReadToEnd(); var ts = t.TrimStart(); return t.Length == 0 ? null : ts.StartsWith("{") || ts.StartsWith("[") ? Store.Json().DeserializeObject(t) : ts.StartsWith("\"") ? Store.Json().Deserialize<string>(t) : t; }
-            }
-            catch (WebException ex)
-            {
-                var r = ex.Response as HttpWebResponse; string detail = "";
-                if (r != null) try { using (var sr = new StreamReader(r.GetResponseStream())) detail = sr.ReadToEnd(); } catch { }
-                throw new Exception((r != null ? "HTTP " + (int)r.StatusCode + " " : "") + ex.Message + (detail.Length > 0 ? " — " + (detail.Length > 300 ? detail.Substring(0, 300) : detail) : ""));
-            }
-        }
-        public static IEnumerable<Dictionary<string, object>> List(object o) { var a = o as object[]; if (a == null && o is System.Collections.ArrayList) a = ((System.Collections.ArrayList)o).ToArray(); return a == null ? Enumerable.Empty<Dictionary<string, object>>() : a.OfType<Dictionary<string, object>>(); }
-        public static string S(Dictionary<string, object> d, string k) { object v; return d != null && d.TryGetValue(k, out v) && v != null ? Convert.ToString(v) : ""; }
-    }
+    // (le helper HTTP JSON est dans Supervision.cs, partagé par les deux éditions)
 
     // ===================================================================== GLPI (API REST v1 : apirest.php)
     static partial class Glpi
@@ -57,6 +29,7 @@ namespace AmiOps
             if (session == null) h["Authorization"] = "user_token " + Secrets.Get("GlpiUser"); else h["Session-Token"] = session;
             return h;
         }
+        public static Dictionary<string, string> Headers(string session) { return H(session); }   // pour la relecture des postes supervisés
 
         public static T Session<T>(Func<string, T> f)
         {
@@ -371,8 +344,8 @@ namespace AmiOps
     static class Updater
     {
         public static string Repo { get { return Prefs.Ini.Get("UpdateRepo", "alexisbouchet6-del/tech-it-ab"); } }
-        // certificat de signature de code Amiprotek (kit glpi-amiprotek, signing/amiprotek-codesigning.cer)
-        public const string AmiprotekThumb = "7C02F586B652E6C722E3523BD86170E5564B9D0A";
+        // certificat de signature de code d'alex.b (Amiprotek) — même empreinte que le contrôle d'authenticité
+        public const string AmiprotekThumb = Ed.SignThumb;
 
         static Dictionary<string, string> H(bool binary)
         {

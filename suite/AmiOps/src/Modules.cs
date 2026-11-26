@@ -433,6 +433,9 @@ namespace AmiOps
     {
         readonly Dictionary<string, TextBox> f = new Dictionary<string, TextBox>();
         readonly NumericUpDown lockMin;
+#if POSTE
+        Label supervLbl;
+#endif
         public override string Title { get { return "Paramètres"; } }
 
         public SettingsPage()
@@ -476,6 +479,10 @@ namespace AmiOps
             cUpd.CheckedChanged += (s, e) => { Prefs.Ini.Set("UpdateAuto", cUpd.Checked); Prefs.Save(); };
             Controls.AddRange(new Control[] { cTray, cAuto, cLink, cUpd });
             Btn("▶ Autotest de " + Ed.Name + " (lecture seule)", t => t.Ok, k(560), k(160), (s, e) => Shell.RunSelfTest(), true);
+#if POSTE
+            Btn("Supervision par mon prestataire…", t => t.Accent2, k(560), k(196), (s, e) => SupervDialog(), false);
+            supervLbl = Lbl(SupervStatus(), k(560), k(228), Superv.Enrolled ? "accent" : "muted");
+#endif
             Lbl("Sauvegarde automatique : une copie par jour (60 jours) dans « sauvegardes » du dossier des données. Écriture atomique : pas de base corrompue en cas de coupure.", 0, y + k(48), "muted");
             Lbl("Base partagée sur un NAS : chaque enregistrement garde la version de l'autre poste en « conflit_… » si deux techniciens modifient en même temps.", 0, y + k(68), "muted");
         }
@@ -502,6 +509,37 @@ namespace AmiOps
             }
             else CyberForm.Info(this, "Paramètres enregistrés.");
         }
+
+#if POSTE
+        string SupervStatus()
+        {
+            if (!Superv.Enrolled) return "Supervision : désactivée (ce poste ne remonte rien).";
+            return "Supervision ACTIVE — prestataire alex.b, code " + Superv.Code + (Superv.Consented ? "" : " (en attente d'acceptation)") +
+                   (Superv.LastSent.Year > 2000 ? " · dernier envoi " + Superv.LastSent.ToString("dd/MM/yyyy HH:mm") : "");
+        }
+
+        void SupervDialog()
+        {
+            if (!Authenticity.Trusted) { CyberForm.Warn(this, "Cette copie n'est pas la version officielle signée par alex.b : la supervision est désactivée."); return; }
+            var fu = new F("Serveur d'inventaire de ton prestataire (https…/front/inventory.php)", Superv.Url.Length > 0 ? Superv.Url : "https://glpi.ami-tech.fr:8443/front/inventory.php") { Required = true };
+            var fc = new F("Code client (CLI-09-16-0699)", Superv.Code) { Required = true };
+            var fo = new F("Activer la supervision", Superv.On ? "Oui" : "Non") { Options = new[] { "Oui", "Non" }, Editable = false };
+            if (!Dlg.Edit(this, "Supervision par mon prestataire", fu, fc, fo)) return;
+            var url = fu.Value.Trim(); var code = fc.Value.Trim().ToUpperInvariant(); bool on = fo.Value == "Oui";
+            if (on && !Superv.UrlOk(url)) { CyberForm.Warn(this, "Adresse du serveur invalide (https obligatoire)."); return; }
+            if (on && !Superv.CodeOk(code)) { CyberForm.Warn(this, "Code client invalide (format CLI-09-16-0699)."); return; }
+            Superv.SetEnrolment(url, code, on);
+            if (on && !Superv.Consented)
+            {
+                if (CyberForm.Ask(this, Superv.ConsentText)) Superv.SetConsent(true);
+                else { Superv.SetEnrolment(url, code, false); CyberForm.Info(this, "Supervision non activée (acceptation refusée)."); supervLbl.Text = SupervStatus(); return; }
+            }
+            supervLbl.Text = SupervStatus();
+            if (on && Superv.Active && CyberForm.Ask(this, "Supervision activée. Envoyer un premier état maintenant pour vérifier ?"))
+                Jobs.Run("Envoi de l'état au prestataire", null, j => Superv.Send("test depuis Paramètres", j.Log));
+            else if (!on) CyberForm.Info(this, "Supervision désactivée : ce poste ne remonte plus rien.");
+        }
+#endif
 
         void Restore()
         {

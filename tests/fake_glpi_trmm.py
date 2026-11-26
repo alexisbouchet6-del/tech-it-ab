@@ -9,6 +9,7 @@ COMPUTERS=[{"id":1,"name":"CLI09160699-01","entities_id":5,"serial":"SN1","last_
            {"id":2,"name":"CLI09160699-03","entities_id":5,"serial":"SN3","last_inventory_update":"2026-10-01 09:00:00"},
            {"id":3,"name":"AUTRE-PC","entities_id":7,"serial":"SN9","last_inventory_update":"2026-11-26 09:00:00"}]
 AGENTS=[{"itemtype":"Computer","items_id":1,"last_contact":"2026-11-26 10:00:00","tag":"CLI-09-16-0699"}]
+SUPERV={}   # cid -> ligne d'état (marqueur « État PC Santé AB ») reçue par /front/inventory.php
 TRMM=[{"agent_id":"abc-1","hostname":"CLI09160699-01","client_name":"CLI-09-16-0699 - Garage Test","site_name":"Siège","status":"online","last_seen":"2026-11-26T09:30:00Z","needs_reboot":True,"has_patches_pending":False,"checks":{"failing":2},"operating_system":"Windows 11 Pro"},
       {"agent_id":"abc-2","hostname":"CLI09160699-02","client_name":"CLI-09-16-0699 - Garage Test","site_name":"Siège","status":"offline","last_seen":"2026-11-01T09:30:00Z","needs_reboot":False,"has_patches_pending":True,"checks":{"failing":0},"operating_system":"Windows 10 Pro"},
       {"agent_id":"zzz-9","hostname":"PC-AUTRE","client_name":"CLI-01-01-0001 - Autre","site_name":"S","status":"online","last_seen":"2026-11-26T09:30:00Z"}]
@@ -23,6 +24,19 @@ class H(BaseHTTPRequestHandler):
         LOG.append({"m":method,"p":p,"q":u.query,"h":{k:v for k,v in self.headers.items() if k in("Authorization","Session-Token","App-Token","X-API-KEY","Content-Type")},"b":b[:4000].decode("utf-8","replace")})
         if p=="/__log": return self.send(200,LOG)
         if p=="/": return self.send(200,{"ok":1})
+        if p=="/front/inventory.php" and method=="POST":
+            try:
+                inv=json.loads(b.decode("utf-8","replace")); ct=inv.get("content",{})
+                name=ct.get("hardware",{}).get("name",""); tag=inv.get("tag","")
+                mark=next((s for s in ct.get("softwares",[]) if s.get("name")=="État PC Santé AB"),None)
+                cid={"CLI09160699-07":7}.get(name,7)
+                if not any(c["id"]==cid for c in COMPUTERS):
+                    COMPUTERS.append({"id":cid,"name":name,"entities_id":5,"serial":ct.get("bios",{}).get("ssn",""),"last_inventory_update":"2026-11-26 21:30:00"})
+                if mark: SUPERV[cid]=mark.get("version","")
+                LOG[-1]["inventory"]={"tag":tag,"name":name,"deviceid":inv.get("deviceid",""),"has_marker":mark is not None}
+                return self.send(200,{"status":"ok"})
+            except Exception as ex:
+                return self.send(400,{"status":"error","message":str(ex)})
         if p.startswith("/range/"):
             body="0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n1E4C9B93F3F0682250B6CF8331B7EE68FD8:9999999\r\nFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:0"
             b=body.encode(); self.send_response(200); self.send_header("Content-Type","text/plain"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
@@ -36,9 +50,18 @@ class H(BaseHTTPRequestHandler):
             if p=="/initSession": return self.send(200,{"session_token":"S1"}) if self.headers.get("Authorization")=="user_token tok" else self.send(401,["ERROR_GLPI_LOGIN","bad"])
             if self.headers.get("Session-Token")!="S1": return self.send(401,["ERROR_SESSION_TOKEN_INVALID",""])
             if p=="/killSession": return self.send(200,{})
-            if p=="/Computer/":
+            if p=="/Computer/" or p=="/Computer":
                 n=q.get("searchText[name]",[None])[0]
                 return self.send(200,[c for c in COMPUTERS if n is None or n.lower() in c["name"].lower()])
+            mc=re.match(r"^/Computer/(\d+)$",p)
+            if mc:
+                cid=int(mc.group(1)); c=next((x for x in COMPUTERS if x["id"]==cid),None)
+                if c is None: return self.send(404,["ERROR_ITEM_NOT_FOUND",""])
+                out=dict(c)
+                if "with_softwares" in q:
+                    sw=SUPERV.get(cid)
+                    out["_softwares"]=[{"softwares_name":"État PC Santé AB","name":"État PC Santé AB","version":sw}] if sw else []
+                return self.send(200,out)
             if p=="/Agent/": return self.send(200,AGENTS)
             m=re.match(r"^/Computer/(\d+)/(\w+)/$",p)
             if m:

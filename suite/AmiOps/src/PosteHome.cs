@@ -60,14 +60,23 @@ namespace AmiOps
                 new[] { "outils", "Outils", "raccourcis Windows et utilitaires" },
                 new[] { "scen", "Scénarios", "PC lent, écran bleu, réseau, prêt à jouer" },
             };
+            var list = tiles.ToList();
+            if (Superv.Enrolled) list.Add(new[] { "superv", "Mon état → prestataire", "envoyer l'état de ce PC à alex.b (maintenance)" });
             int y = k(104), x = 0;
-            foreach (var t in tiles)
+            foreach (var t in list)
             {
                 var key = t[0];
-                var b = new Chip(t[1] + "\n" + t[2]) { AccentOf = th => th.Accent, Location = new Point(x, y), Size = new Size(k(330), k(64)) };
-                b.Click += (s, e) => { if (key == "scen") using (var sf = new ScenarioForm(Shell)) sf.ShowDialog(this); else Shell.Go(key, null); }; Controls.Add(b);
+                var b = new Chip(t[1] + "\n" + t[2]) { AccentOf = th => key == "superv" ? th.Accent2 : th.Accent, Location = new Point(x, y), Size = new Size(k(330), k(64)) };
+                b.Click += (s, e) => { if (key == "scen") using (var sf = new ScenarioForm(Shell)) sf.ShowDialog(this); else if (key == "superv") SendState(); else Shell.Go(key, null); }; Controls.Add(b);
                 x += k(342); if (x + k(330) > k(1040)) { x = 0; y += k(74); }
             }
+        }
+
+        void SendState()
+        {
+            if (!Superv.Consented) { if (!CyberForm.Ask(this, Superv.ConsentText)) return; Superv.SetConsent(true); }
+            Jobs.Run("Envoi de l'état au prestataire", null, j => Superv.Send("envoi manuel", j.Log));
+            CyberForm.Info(this, "État en cours d'envoi à ton prestataire (suivi dans Tâches).");
         }
         public override void OnShow()
         {
