@@ -1,0 +1,13 @@
+PrépaPoste {VERSION} - Développé by alex.b
+
+Préparation d'un PC neuf : coche les actions puis « PRÉPARER LE POSTE ».
+- Système : nom du PC, fuseau Paris, alimentation, démarrage rapide off, point de restauration, RDP (option).
+- Explorateur : extensions visibles, « Ce PC », menu clic droit classique, pubs du menu Démarrer coupées.
+- Logiciels via winget (liste modifiable : « Listes logiciels / applis… »).
+- Suppression des applis préinstallées inutiles (liste modifiable).
+- Windows Update + mise à jour de tous les logiciels.
+- Contrôle final : BitLocker, activation Windows, antivirus, disque, RAM.
+Le point de restauration est créé AVANT les autres actions. Rapport enregistré dans ProgramData\PrepaPoste\rapports.
+Les réglages Explorateur s'appliquent au compte qui lance l'outil : ouvre la session de l'utilisateur final.
+winget absent (Windows 10 ancien) : installer « App Installer » depuis le Microsoft Store.
+Admin demandé au lancement. PrepaPoste-Setup : à installer. PrepaPoste-portable : clé USB (le plus pratique ici).

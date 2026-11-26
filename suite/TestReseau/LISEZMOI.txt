@@ -1,0 +1,6 @@
+TestReseau {VERSION} - Développé by alex.b
+
+Test réseau en 20 s avec verdict (DHCP, passerelle, FAI, DNS, portail captif, web bloqué, services).
+« Modifier les cibles » : ajoute les serveurs mail / SIP / NAS de tes clients.
+{VERSION} : l'IP publique n'est plus envoyée à un service tiers (api.ipify.org) sauf si tu actives « IP publique ».
+Sans droits admin. TestReseau-Setup : à installer. TestReseau-portable : clé USB.

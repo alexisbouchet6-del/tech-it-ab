@@ -1,0 +1,34 @@
+# Binaires et sorties de compilation
+*.exe
+*.dll
+*.pdb
+out/
+dist/
+obj/
+**/build/*.exe
+**/build/*.zip
+
+# Secrets : ne jamais pousser
+.env
+*.pfx
+*.p12
+*.key
+*.pem
+secrets*.txt
+
+# Données clients (AMI·OPS stocke tout dans %ProgramData%, jamais dans le dépôt)
+amiops*.json
+coffre*.json
+conflit_*.json
+*.log
+autotest.txt
+
+# Divers
+*.tmp
+.vs/
+.vscode/
+Thumbs.db
+desktop.ini
+
+# Tests : certificat auto-signé des faux serveurs
+tests/*.pem

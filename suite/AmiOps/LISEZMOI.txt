@@ -1,0 +1,119 @@
+AMI·OPS {VERSION} - la console du technicien - Développé by alex.b
+
+UN SEUL EXE POUR TOUT LE QUOTIDIEN
+- Accueil : chiffres du mois, heures, alertes triées (interventions à clôturer, messagerie en erreur,
+  Windows 7/8/10 et Server 2012/2016 en fin de support chez tes clients, visites de maintenance à planifier,
+  PanneScan critique), dernières interventions.
+- Ctrl+K : recherche partout (client, IP, n° de série, ID QuickConnect, ticket, texte d'intervention, actions).
+- Clients : fiche, contacts, parc (PC, NAS, téléphones, imprimantes…), interventions, domaines, identifiants.
+  « Importer… » reprend ta liste NasConnect (clients + NAS) ou un CSV de clients.
+- Interventions : Ctrl+N = nouvelle fiche avec CHRONO lancé (visible en permanence à gauche), actions fréquentes
+  en double-clic, infos du poste, dernier PanneScan, signature du client, rapport PDF, texte Note Station, export CSV.
+- PanneScan : en 30 s, écrans bleus (journal + minidumps décodés), arrêts brutaux, secteurs défectueux, SMART /
+  usure SSD, erreurs matérielles WHEA, test mémoire, pilotes et périphériques en erreur, plantages d'applis,
+  température, batterie, démarrage rapide, place disque -> PISTE PRINCIPALE + action à faire.
+- Réseau : scan du réseau, puis « Ajouter la sélection à ce client » (le parc se remplit tout seul).
+- Messagerie : SPF / DKIM / DMARC / certificats de TOUS les domaines clients en un clic.
+- Coffre : identifiants clients chiffrés (AES-256 + HMAC, PBKDF2 300 000 itérations), copie hors historique Win+V
+  effacée après 30 s, verrouillage automatique, générateur de mots de passe. Ctrl+L = verrouiller.
+- Temps passé : par client et par période, graphique, export CSV.
+- Outils : les 13 applis de la suite sont INTÉGRÉES (DiagPoste, MaintenancePC, PrépaPoste, ProfilSave, TestReseau,
+  ScanParc, MailCheck, TriFichiers, Rapport d'intervention, NasConnect, NetSwitch, Outils VTx, PowerMenu) ;
+  rien d'autre à installer. Raccourcis Windows.
+- Secours : réparer un Windows qui ne démarre plus (disque du PC branché en USB, ou clé de secours) :
+  démarrage (bcdboot), mises à jour en attente, pilote fautif, pilote de démarrage qui bloque (antivirus…),
+  mode sans échec forcé, SFC / CHKDSK hors ligne, sauvegarde des profils, santé des disques.
+
+NOUVEAU EN 1.1 - OUTILS TECHNIQUES
+- OPTIMISATION : bilan du poste noté /10 par élément (processeur, mémoire, type et santé du disque, espace,
+  démarrage, applis en arrière-plan, mises à jour, pilotes, sécurité, batterie, graphisme, version de Windows)
+  + note globale + PRÉCONISATIONS (SSD, RAM avec type et emplacements libres, batterie, Windows 11, remplacement).
+  Test de rapidité = WinSAT (échelle Microsoft, PC branché sur secteur).
+  Nettoyage + corbeille, programmes au démarrage (même mécanisme que le Gestionnaire des tâches, réversible),
+  services tiers, applis en cours, mises à jour Windows ET pilotes, antivirus (Defender, ou Microsoft Safety
+  Scanner vérifié par signature si un autre antivirus est installé).
+  « Optimisation 1 clic » : point de restauration → nettoyage → démarrage → MAJ + pilotes → antivirus → nouveau bilan.
+- DÉPANNAGE : écrans bleus avec le PILOTE EN CAUSE (WinDbg, installable en 1 clic), Windows Update bloqué,
+  file d'impression, imprimantes (test, défaut, ajout par IP), Outlook (sans échec, profils, OST, SCANPST),
+  index de recherche, réseau léger / complet, Store, icônes, menu Démarrer, horloge, DISM + SFC,
+  démarrage & malwares (signatures, VirusTotal par empreinte, persistance WMI), licence Windows (clé OEM du BIOS),
+  test de surface du disque (lecture seule).
+- DIAGNOSTIC RÉSEAU : analyse Wi-Fi (signal, canaux, canal conseillé), surveillance des coupures box / Internet / DNS
+  avec graphique et verdict (local, opérateur, DNS), détection d'un 2e serveur DHCP, débit entre deux PC,
+  test d'envoi SMTP authentifié (refus d'envoyer un mot de passe sans chiffrement).
+- SÉCURITÉ : audit /100 (BitLocker, antivirus, pare-feu, version de Windows, mises à jour, UAC, SMBv1, admins locaux,
+  Invité, Administrateur intégré, RDP/NLA, PowerShell 2, LLMNR, exécution auto USB, Secure Boot/TPM, mots de passe,
+  services exposés, démarrage non signé) avec corrections en 1 clic.
+- SERVEUR AD : santé du domaine (dcdiag, réplication, FSMO, heure, DNS, SYSVOL), ORIGINE D'UN COMPTE VERROUILLÉ
+  (événement 4740 du PDC), comptes verrouillés + déverrouillage, gpresult, gpupdate.
+- MAC : dossier « mac » → diag-mac.sh (Terminal : bash diag-mac.sh), rapport sur le Bureau.
+
+Windows 11 : l'analyse Wi-Fi demande d'activer la localisation (Paramètres > Confidentialité > Localisation).
+VirusTotal : clé API gratuite à saisir une fois (stockée chiffrée DPAPI) ; seules les empreintes SHA-256 sont envoyées.
+
+NOUVEAU EN 1.3 - PROJET GLPI AMIPROTEK (page « Parc client »)
+Prérequis : le nom du client contient son code (« CLI-09-16-0699 - Nom »), GLPI et Tactical RMM configurés
+dans Connecteurs, règle GLPI « étiquette de l'agent = code client → entité du client ».
+- RECETTE DE LIVRAISON (sur le PC du client) : rapport du kit USB (rapport-deploiement.json), nom CLI09160699-NN,
+  licences Windows et Office, BitLocker + clé séquestrée, agent GLPI (service, serveur, étiquette), inventaire reçu
+  dans la BONNE entité, agent Tactical RMM en ligne chez le BON client, Kaspersky actif et à jour, mises à jour,
+  compte « User », TeamViewer QuickSupport. Verdict CONFORME / avec réserves / NON CONFORME.
+- PV + SIGNATURE : fiche d'intervention « Livraison » préremplie avec la recette, signature du client.
+  → GLPI (LIVRAISON) : ticket créé, PC lié, temps passé, PV en PDF joint, ticket résolu si conforme.
+- SÉQUESTRER LA CLÉ : la clé de récupération BitLocker va dans le COFFRE chiffré d'AMI·OPS, jamais dans GLPI.
+- ENRÔLER CE PC (PC déjà chez le client, pas installé avec la clé) : numéro libre calculé depuis GLPI, GLPI Agent
+  (dernière version GitHub, empreinte SHA-256 vérifiée, ou MSI local) avec l'étiquette du client, agent Tactical RMM
+  (lien de déploiement du client), BitLocker + séquestre, renommage. Puis redémarrage et recette.
+- ÉTAT DU PARC : tous les PC du client (GLPI + Tactical RMM) : pas vus depuis 7 jours, disque plein, BitLocker,
+  antivirus, Windows 10 en fin de support, redémarrage et mises à jour en attente, contrôles en échec.
+  « Ticket pour ce PC » ouvre un incident GLPI avec les constats.
+- RAPPORT MENSUEL de conformité (PDF par client, ou tous les clients d'un coup), joint à l'entité GLPI.
+- TICKETS GLPI DU CLIENT : tickets ouverts, ajout de suivi, tâche avec temps passé, résolution.
+  Interventions : « → Ticket GLPI » sur une intervention déjà liée COMPLÈTE le ticket au lieu d'en créer un autre.
+- NAS → GLPI : contrôle de santé des NAS (NasConnect) ; alerte = ticket dans l'entité du client (un seul ticket
+  ouvert par NAS, complété ensuite).
+- MULTI-PC : nouveau canal « Tactical RMM (PC des clients) » : aucun port à ouvrir, fonctionne hors domaine.
+- SANTÉ DES SERVEURS (Connecteurs) : glpi, rmm, api, mesh.ami-tech.fr : réponse HTTPS, certificat (alerte à
+  21 jours), contrôle quotidien avec notification.
+- « Annuler la tâche » arrête réellement le programme en cours (et ses enfants : DISM, sfc…).
+- Safety Scanner : signature Microsoft vérifiée jusqu'à la racine « Microsoft Root Certificate Authority ».
+
+NOUVEAU EN 1.2 - MULTI-TÂCHE, SCÉNARIOS, CONNECTEURS
+- CENTRE DES TÂCHES : jusqu'à 4 actions en même temps (nettoyage + antivirus + diagnostic réseau…). Les actions
+  qui se gênent (deux Windows Update, deux réparations réseau, spouleur, antivirus, index) attendent leur tour
+  automatiquement. Chaque tâche : journal en direct, durée, état, annulation de la file. Pastille dans le menu.
+- SCÉNARIOS (accueil ou Ctrl+K) : PC lent, Écran bleu, PC neuf, Problème réseau, Fin d'intervention. Un clic =
+  la fiche d'intervention est créée pour le client choisi et les étapes s'enchaînent dans le centre des tâches.
+- ICÔNE PRÈS DE L'HORLOGE : fermer la fenêtre garde AMI·OPS actif. Menu : chrono, tâches en cours, scénarios,
+  bascule réseau rapide (NetSwitch), VT-x (Outils VTx), NAS (NasConnect), PowerMenu.
+  Démarrage avec Windows (Paramètres) : version INSTALLÉE uniquement (sécurité : voir plus bas).
+- LECTEURS RÉSEAU : option « EnableLinkedConnections » (Paramètres) pour que les lecteurs montés par AMI·OPS
+  apparaissent aussi dans l'Explorateur (redémarrage de session nécessaire). Outlook est relancé avec TES droits.
+- MULTI-PC : la même action sur plusieurs postes du réseau (inventaire, santé, sécurité rapide, recherche Windows
+  Update, commande PowerShell libre) via WinRM. Mot de passe jamais écrit sur disque ni sur la ligne de commande.
+- CONNECTEURS : GLPI (synchronisation des entités et ordinateurs, bouton « → Ticket GLPI » sur une intervention :
+  temps passé + rapport) et Tactical RMM (liste des agents, commande à distance). Jetons chiffrés DPAPI, https exigé.
+- MISE À JOUR : vérification quotidienne sur GitHub ; mise à jour refusée si l'empreinte SHA-256 ne correspond pas
+  (et si la signature n'est pas valide quand une empreinte de certificat est épinglée dans Paramètres).
+  L'ancienne version est gardée en AmiOps.exe.old.
+- AUTOTEST : Paramètres > Autotest (lecture seule, rapport texte). En ligne de commande :
+  AmiOps.exe --selftest rapport.txt  (code de sortie = nombre d'échecs).
+- Windows 11 26H2 (build 26300) reconnu comme version à jour dans le bilan et l'audit.
+
+SÉCURITÉ 1.2
+Le démarrage automatique crée une tâche planifiée lancée en administrateur sans invite UAC. Elle est refusée
+pour un exe portable (Téléchargements, Bureau, clé USB) : n'importe quel programme de la session pourrait
+remplacer cet exe et obtenir les droits admin. Même règle pour NetSwitch et Outils VTx.
+Les fichiers exécutés ou importés en admin (mise à jour, Safety Scanner, tâche planifiée) sont préparés dans un
+dossier neuf réservé à SYSTEM et aux Administrateurs, jamais dans %TEMP%.
+
+CLÉ DE SECOURS (WinPE)
+Dossier « cle-secours » : Creer-cle-secours.ps1 (PowerShell admin, ADK + module WinPE installés).
+Crée une ISO (pour Ventoy) ou écrit une clé USB. Le PC démarre directement sur AMI·OPS en mode secours.
+Pilotes de stockage spécifiques (Intel RST / VMD) : mettre les .inf dans cle-secours\pilotes avant.
+
+DONNÉES
+%LocalAppData%\AmiOps\donnees (modifiable dans Paramètres : un partage NAS = base partagée).
+Écriture atomique + une sauvegarde par jour (60 jours). Le coffre est un fichier séparé, chiffré.
+
+Admin demandé au lancement (diagnostics, réparation). AmiOps-Setup : à installer. AmiOps-portable : clé USB.

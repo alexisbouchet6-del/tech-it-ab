@@ -1,0 +1,5 @@
+DiagPoste {VERSION} - Développé by alex.b
+
+Diagnostic complet du poste avec verdict, puis « Copier pour le ticket » (Note Station) ou « Exporter HTML ».
+{VERSION} : durcissement (DLL chargées uniquement depuis System32, dossier de données protégé en écriture).
+Admin demandé au lancement. DiagPoste-Setup : à installer. DiagPoste-portable : clé USB.

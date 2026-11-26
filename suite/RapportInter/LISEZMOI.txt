@@ -1,0 +1,12 @@
+Rapport d'intervention {VERSION} - Développé by alex.b
+
+Saisie du rapport : client (mémorisé), site, contact, ticket, type, lieu, horaires (durée calculée), demande,
+diagnostic, actions (double-clic sur une action fréquente pour l'ajouter), matériel, recommandations, résultat.
+- « Infos de ce poste » : ajoute nom, modèle, n° de série, Windows, processeur, RAM.
+- Signature du client à la souris, au stylet ou au doigt (écran tactile).
+- « ENREGISTRER + PDF » : rapport HTML ouvert dans le navigateur → bouton « Imprimer / Enregistrer en PDF ».
+- « Copier pour Note Station » : version texte pour le ticket.
+- « Ouvrir… » : recharge un rapport (.rapport) pour le corriger.
+- « Société / logo… » : nom, coordonnées et logo en en-tête (à remplir une fois).
+Rapports dans Documents\Rapports d'intervention.
+Sans droits admin. RapportInter-Setup : à installer. RapportInter-portable : clé USB.

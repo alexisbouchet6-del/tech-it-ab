@@ -1,0 +1,11 @@
+ScanParc {VERSION} - Développé by alex.b
+
+Inventaire du réseau local en 1 clic : IP, nom, MAC, fabricant, type deviné (NAS Synology, téléphone Yealink /
+Gigaset, imprimante, PC Windows, box…), ports ouverts et titre de la page web d'administration.
+- Plage proposée = réseau de la carte active (/22 à /30, ou plage 192.168.1.10-192.168.1.80).
+- Double-clic = ouvre la page d'admin (DSM en 5001 si présent). Clic droit : RDP, partages, copier IP / MAC.
+- « Exporter CSV » (Excel) et « Copier pour le ticket ».
+- « Fabricants… » : liste des préfixes MAC modifiable (seuls des préfixes vérifiés sont fournis, ajoute ceux de tes clients).
+Limites : la MAC n'est visible que dans le même sous-réseau. Le type est une estimation.
+À n'utiliser que sur les réseaux que tu es autorisé à analyser (clients sous contrat).
+Sans droits admin. ScanParc-Setup : à installer. ScanParc-portable : clé USB.

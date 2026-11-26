@@ -1,0 +1,12 @@
+MailCheck {VERSION} - Développé by alex.b
+
+Contrôle de la messagerie d'un domaine en 10 s, avec verdict :
+- MX et hébergeur détecté (Microsoft 365, OVHcloud, Google, o2switch, IONOS, Gandi, Orange, filtre antispam).
+- SPF : présence, unicité, fin (-all / ~all / +all), nombre de requêtes DNS (limite 10), include de l'hébergeur.
+- DKIM : sélecteurs courants (selector1/2 M365, google, default, ovhmo…). Sélecteur perso : regarde l'en-tête DKIM-Signature.
+- DMARC : politique none / quarantine / reject, rapports.
+- Autodiscover (Outlook / M365).
+- Serveurs IMAP / POP / SMTP : port + certificat (validité, date d'expiration). Aucun identifiant envoyé.
+Option « Serveur IMAP/SMTP » : ex. mail.domaine-client.fr (o2switch, serveur dédié).
+Listes noires : bouton MXToolbox.
+Sans droits admin. MailCheck-Setup : à installer. MailCheck-portable : clé USB.

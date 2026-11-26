@@ -1,0 +1,15 @@
+NasConnect {VERSION} - Développé by alex.b
+
+ONGLET « MES NAS » : parc de NAS via QuickConnect (double-clic = DSM + mot de passe copié 30 s), import de l'export
+des mots de passe du navigateur, identifiants par défaut, santé (disques / RAID / volumes), checkup dimanche 12 h.
+ONGLET « LECTEURS RÉSEAU » : lecteurs en local ou via Tailscale / VPN.
+
+{VERSION} - SÉCURITÉ
+- Le mot de passe copié n'entre plus dans l'historique du presse-papiers (Win+V) ni dans la synchro cloud.
+- Certificat de chaque NAS mémorisé à la 1re connexion : connexion refusée et alerte s'il change
+  (renouvellement normal : « Modifier » le NAS puis « Enregistrer » pour accepter le nouveau).
+- Le CSV importé est écrasé avant suppression.
+- DLL chargées uniquement depuis System32.
+- Conseil : sur chaque NAS, un compte DÉDIÉ à NasConnect (mot de passe unique) ; ton compte perso garde la 2FA.
+
+Mots de passe chiffrés par Windows (Gestionnaire d'identification). Ce PC donne accès à tous les NAS : BitLocker + session verrouillée.

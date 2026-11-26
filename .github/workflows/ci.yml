@@ -1,0 +1,83 @@
+# Compilation avec le compilateur Microsoft + autotest d'AMI·OPS sur un vrai Windows — by alex.b
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Recherche de secrets (gitleaks, commits poussés)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compilation (Roslyn)
+        shell: pwsh
+        run: ./build/build.ps1
+      - name: Autotest AMI·OPS (lecture seule)
+        shell: pwsh
+        run: ./build/selftest.ps1
+      - name: Analyse des scripts PowerShell (PSScriptAnalyzer)
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $r = Invoke-ScriptAnalyzer -Path ./build, ./suite/AmiOps/cle-secours -Recurse -Severity Error
+          $r | Format-Table -AutoSize
+          if ($r) { exit 1 }
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: amiops-${{ github.sha }}
+          path: |
+            out/*.exe
+            out/SHA256SUMS.txt
+            out/autotest.txt
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [secrets-scan, build-test]
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compilation
+        shell: pwsh
+        run: ./build/build.ps1
+      - name: Signature (si le certificat est configuré dans les secrets)
+        shell: pwsh
+        env:
+          SIGN_PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
+          SIGN_PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
+        run: |
+          if (-not $env:SIGN_PFX_BASE64) { Write-Host 'Pas de certificat : exe non signés.'; exit 0 }
+          $pfx = Join-Path $env:RUNNER_TEMP 'sign.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGN_PFX_BASE64))
+          $cert = Get-PfxCertificate -FilePath $pfx -Password (ConvertTo-SecureString $env:SIGN_PFX_PASSWORD -AsPlainText -Force)
+          Get-ChildItem out -Filter *.exe | ForEach-Object {
+            $s = Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -TimestampServer 'http://timestamp.digicert.com' -HashAlgorithm SHA256
+            if ($s.Status -ne 'Valid' -and $s.Status -ne 'UnknownError') { throw "Signature échouée : $($_.Name) ($($s.Status))" }
+          }
+          Remove-Item $pfx -Force
+          Get-ChildItem out -Filter *.exe | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name } | Set-Content out/SHA256SUMS.txt -Encoding ascii
+      - name: Publication de la version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create $env:GITHUB_REF_NAME (Get-ChildItem out -Filter *.exe).FullName out/SHA256SUMS.txt --generate-notes --title "AMI·OPS $env:GITHUB_REF_NAME"

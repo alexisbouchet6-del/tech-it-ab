@@ -1,0 +1,6 @@
+MaintenancePC {VERSION} - Développé by alex.b
+
+Maintenance en un clic : RAPIDE (~5 min) ou COMPLET (~45 min : + pilotes Windows Update, DISM, SFC, optimisation).
+Outil du fabricant (Dell / Lenovo / HP) à cocher à la main (Dell Command Update peut redémarrer le PC).
+{VERSION} : durcissement (DLL chargées uniquement depuis System32, dossier de données et rapports protégés en écriture).
+Admin demandé au lancement. MaintenancePC-Setup : à installer. MaintenancePC-portable : clé USB.

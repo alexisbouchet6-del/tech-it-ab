@@ -1,0 +1,11 @@
+ProfilSave {VERSION} - Développé by alex.b
+
+Sauvegarde / restauration de profil avant réinstallation ou changement de PC.
+SAUVEGARDER (profil + destination NAS/clé) puis, sur le nouveau PC, RESTAURER ce dossier.
+
+NOUVEAU (sécurité) : sauvegarde CHIFFRÉE AES-256 (noms de fichiers compris) avec 7-Zip.
+- Nécessite 7-Zip sur le PC (winget install 7zip.7zip).
+- Mot de passe de 12 caractères minimum, jamais enregistré : sans lui, la sauvegarde est irrécupérable.
+- Les fichiers temporaires sensibles (Wi-Fi, favoris, listes) sont écrasés après usage.
+
+Admin demandé au lancement. ProfilSave-Setup : à installer. ProfilSave-portable : clé USB.

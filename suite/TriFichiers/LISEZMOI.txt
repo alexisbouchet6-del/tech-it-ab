@@ -1,0 +1,17 @@
+TriFichiers {VERSION} - Développé by alex.b
+
+DOUBLONS : fichiers au contenu identique (SHA-256), même si le nom diffère. Le plus ancien est conservé (vert),
+les copies cochées vont en QUARANTAINE dans <dossier>\_TriFichiers_Quarantaine (jamais supprimées).
+Vérifie la quarantaine puis supprime-la toi-même.
+
+RANGER : déplace les fichiers dans Images / Vidéos / Musique / Documents / PDF / Tableurs / Présentations /
+Archives / Programmes / Mails / Plans et dessins / Autres, puis par année (date de prise de vue des photos),
+photos et vidéos par mois. Aperçu complet avant d'appliquer ; conflit de nom = « (2) ».
+Par défaut seul le dossier choisi est rangé (sous-dossiers non touchés).
+
+SÉCURITÉ
+- Rien ne bouge avant « Appliquer ». Chaque opération écrit un journal → « Annuler la dernière opération ».
+- Refusés : racine d'un disque, Windows, Program Files, ProgramData, AppData, racine du profil.
+- Jamais déplacés : fichiers Outlook (.pst / .ost), fichiers système, raccourcis, fichiers temporaires Office (~$).
+- Fonctionne aussi sur un partage NAS (\\NAS\partage) : le déplacement reste sur le NAS.
+Sans droits admin. TriFichiers-Setup : à installer. TriFichiers-portable : clé USB.
