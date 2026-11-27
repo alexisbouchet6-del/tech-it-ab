@@ -96,7 +96,8 @@ jobs:
           if (-not $env:SIGN_PFX_BASE64) { Write-Host 'Pas de certificat : exe non signés.'; exit 0 }
           $pfx = Join-Path $env:RUNNER_TEMP 'sign.pfx'
           [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGN_PFX_BASE64))
-          $cert = Get-PfxCertificate -FilePath $pfx -Password (ConvertTo-SecureString $env:SIGN_PFX_PASSWORD -AsPlainText -Force)
+          $sec = if ([string]::IsNullOrEmpty($env:SIGN_PFX_PASSWORD)) { New-Object System.Security.SecureString } else { ConvertTo-SecureString $env:SIGN_PFX_PASSWORD -AsPlainText -Force }
+          $cert = Get-PfxCertificate -FilePath $pfx -Password $sec
           Get-ChildItem out -Filter *.exe | ForEach-Object {
             $s = Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -TimestampServer 'http://timestamp.digicert.com' -HashAlgorithm SHA256
             if ($s.Status -ne 'Valid' -and $s.Status -ne 'UnknownError') { throw "Signature échouée : $($_.Name) ($($s.Status))" }
