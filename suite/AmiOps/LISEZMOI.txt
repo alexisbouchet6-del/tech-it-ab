@@ -55,6 +55,21 @@ NOUVEAU EN 1.1 - OUTILS TECHNIQUES
 Windows 11 : l'analyse Wi-Fi demande d'activer la localisation (Paramètres > Confidentialité > Localisation).
 VirusTotal : clé API gratuite à saisir une fois (stockée chiffrée DPAPI) ; seules les empreintes SHA-256 sont envoyées.
 
+NOUVEAU EN 1.7 - RENFORTS CYBER (page Cyber)
+
+- Sysmon (Microsoft Sysinternals) : installation par winget et configuration de journalisation fine écrite par alex.b
+  (processus, connexions réseau, injection de thread, accès à la mémoire de lsass, dépôt dans le Démarrage, clés Run).
+  Le bouton « Sysmon » lit ensuite les événements à fort signal des 3 derniers jours, classés MITRE ATT&CK :
+  injection (T1055), vol d'identifiants LSASS (T1003), PowerShell encodé, persistance.
+- Autoruns (démarrage complet) : lance autorunsc, vérifie les signatures et VirusTotal, et remonte ce qui est non
+  signé, dans un dossier utilisateur, orphelin ou détecté par plusieurs moteurs.
+- Durcissement CIS / ANSSI : audit de ~20 points de configuration (SMBv1, signature SMB, LLMNR, NetBIOS, WDigest,
+  UAC, RunAsPPL, pare-feu, journalisation PowerShell, Defender, compte Invité, ouverture auto, AlwaysInstallElevated,
+  RDP NLA, énumération anonyme, BitLocker, PowerShell v2…), avec une note sur 100, la référence CIS et ANSSI et la
+  remédiation de chaque point. L'audit ne modifie rien : il indique la correction à appliquer.
+- Les constats Sysmon, Autoruns et durcissement s'ajoutent au rapport cyber du client.
+- Outils Microsoft Sysinternals installés depuis winget, jamais embarqués dans l'exécutable.
+
 NOUVEAU EN 1.6 - PROTECTION SOUS MON NOM ET SUPERVISION
 
 PROTECTION « SOUS MON NOM » (anti-copie)

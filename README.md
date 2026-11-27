@@ -41,6 +41,7 @@ Deux applications Windows compilées à partir du même code :
 | Jeu (les deux éditions) | Analyse notée sur 100 (pilote graphique, fréquence et branchement de l'écran, mémoire simple canal ou sans XMP/EXPO, Mode Jeu, enregistrement en arrière-plan, HAGS, alimentation, souris, Visual C++, jeux sur disque dur, applis ouvertes), optimisations réversibles avec point de restauration, session de jeu (fermeture propre des applis inutiles puis réouverture sans droits administrateur), fréquence maximale de l'écran avec retour automatique, pilotes, détection des possibilités d'overclocking (jamais appliqué), bibliothèque Steam/Epic, carte graphique par jeu, latence, composants et outils officiels via winget |
 | Protection (les deux éditions) | Contrôle d'authenticité au démarrage (WinVerifyTrust + empreinte épinglée) : authentique / non signée / altérée ; une copie non authentique est bridée (Cyber, labo, supervision coupés) et affiche un bandeau |
 | Supervision (opt-in) | PC Santé AB enrôlé par code client envoie un état technique à l'endpoint d'inventaire GLPI d'alex.b **sans jeton d'admin** (modèle agent GLPI), avec bandeau « poste supervisé » ; Tech IT AB relit les postes supervisés dans « Parc client » |
+| Renforts cyber (Tech IT AB) | Sysmon (installation winget + config de journalisation fine, lecture des événements à risque classés MITRE : injection T1055, LSASS T1003, PowerShell encodé, persistance), Autoruns (démarrage complet, signatures, VirusTotal), audit de durcissement CIS Benchmark / ANSSI (~20 points, note /100, remédiation, références) |
 | Cyber (Tech IT AB) | Scans Nmap limités au périmètre autorisé de chaque client (autorisation écrite datée, journal des scans, scripts offensifs refusés), règles de risque ANSSI/CIS/MITRE, comparaison entre scans, chasse aux menaces dans les journaux, persistance, connexions, mot de passe compromis (k-anonymat), fichier suspect (VirusTotal par empreinte), rapport PDF |
 | Labo défensif (Tech IT AB) | Analyse d'e-mail (hameçonnage), analyse de lien (IP loggers, sosies de domaines) sans l'ouvrir, détection des scans de ports reçus (journal du pare-feu), durcissement anti-scan réversible, test de sécurité d'un programme (signature, ASLR, DEP, CFG) et comportement avant/après |
 | Parc client (projet GLPI) | Recette de livraison (rapport du kit USB, nommage, licences, BitLocker, agents GLPI et Tactical RMM, Kaspersky, mises à jour), PV signé envoyé dans GLPI, enrôlement d'un PC existant, état du parc par client, rapport mensuel de conformité, NAS → GLPI, tickets GLPI (suivi, tâche avec temps, résolution) |
@@ -113,6 +114,8 @@ python3 fake_glpi_trmm.py 8443 &
 # compiler ParcTests.cs avec les sources (voir suite/AmiOps/build-editions.sh, -main:AmiOps.T13 ou -main:AmiOps.T14 + -r:System.Xml) puis : mono t13.exe ; mono t14.exe (vrai Nmap requis)
 ```
 
+`tests/DefenseTests.cs` (T17, `-main:AmiOps.T17`) vérifie la logique pure des renforts cyber : découpe CSV d'Autoruns, évaluation des entrées de démarrage, évaluation du durcissement CIS/ANSSI (note, remédiation) et mapping des événements Sysmon.
+
 `tests/SupervTests.cs` (T16, `-main:AmiOps.T16`) vérifie le contrôle d'authenticité (décision pure, états), la validation et la construction de l'inventaire GLPI tokenless, et un aller-retour envoi/relecture contre le faux serveur (route `/front/inventory.php`).
 
 `tests/GameTests.cs` (T15, `-main:AmiOps.T15`) vérifie les règles de la page Jeu : reconnaissance des cartes graphiques, version NVIDIA, overclocking possible ou non, mémoire, bibliothèque Steam, liste des processus jamais fermés, note, liste blanche de restauration (lignes trafiquées ignorées), optimisation puis annulation dans le registre. Il se compile pour chaque édition et tourne aussi sur Windows en CI.
@@ -131,14 +134,14 @@ Le workflow `.github/workflows/ci.yml` s'exécute à chaque push et pull request
 
 1. recherche de secrets (gitleaks) dans les commits poussés ;
 2. compilation sur `windows-latest` avec le compilateur Roslyn ;
-3. bancs T15 (page Jeu) et T16 (authenticité, inventaire) puis autotest des deux éditions sur un vrai Windows, et vérification du cloisonnement de PC Santé AB ;
+3. bancs T15 (page Jeu), T16 (authenticité, inventaire) et T17 (renforts cyber) puis autotest des deux éditions sur un vrai Windows, et vérification du cloisonnement de PC Santé AB ;
 4. analyse PowerShell (PSScriptAnalyzer) ;
 5. sur un tag `v*` : signature (si les secrets `SIGN_PFX_BASE64` et `SIGN_PFX_PASSWORD` sont définis), empreintes SHA-256 et publication de la version.
 
 Publier une version :
 
 ```bash
-git tag v1.6.0 && git push origin v1.6.0
+git tag v1.7.0 && git push origin v1.7.0
 ```
 
 ## Architecture
@@ -187,6 +190,7 @@ Choix techniques :
 | Poste du technicien | Exécutable élevé | Détournement de DLL, remplacement de fichier par un processus non élevé | `DefaultDllImportSearchPaths(System32)` et `SetDllDirectory("")`, mise à jour préparée dans un dossier neuf réservé à SYSTEM et aux Administrateurs, instance unique |
 | Réseaux des clients | Scans Nmap | Scan non autorisé, détournement de l'outil | Périmètre par client + autorisation écrite datée (12 mois), refus hors périmètre (noms résolus et vérifiés avant Nmap), plus de 65 536 adresses refusées, profils fixes, scripts offensifs refusés, journal `cyber-audit.log` |
 | Postes des clients | PC Santé AB | Usage malveillant par un tiers | Fonctions sensibles absentes de l'exécutable (compilation par liste blanche), découverte réseau sans test de ports, aucune donnée stockée |
+| Outils Sysinternals (Sysmon, Autoruns) | Poste audité | Binaire tiers non maîtrisé embarqué dans l'exe signé | Installés depuis winget (dépôt Microsoft), jamais embarqués ni téléchargés hors winget ; configuration Sysmon écrite en clair dans le dépôt |
 | Intégrité de l'exe | Copie distribuée | Modification / rebranding via une IA, re-signature par un tiers | Contrôle Authenticode au démarrage (WinVerifyTrust) contre l'empreinte épinglée ; copie non authentique bridée. Garde-fou (contournable par un RE déterminé), pas une protection inviolable : signature du certificat + source privée |
 | Supervision des postes clients | GLPI (inventaire) | Fuite du jeton d'admin GLPI via l'exe client | L'exe client ne contient AUCUN jeton : il poste sur l'endpoint d'inventaire tokenless (tag = code client), comme un agent GLPI ; le jeton d'admin reste sur la machine d'alex.b (DPAPI) pour la relecture seule. Opt-in et visible du client (RGPD) |
 | Mot de passe testé | Have I Been Pwned | Fuite du mot de passe | k-anonymat : 5 caractères de l'empreinte SHA-1 envoyés, réponse avec bourrage |

@@ -569,8 +569,13 @@ namespace AmiOps
             x3 = Btn("Durcir anti-scan", t => t.Warn, x3, y3, (s, e) => HardenPc()).Right + k(6);
             x3 = Btn("Tester un programme…", t => t.Accent2, x3, y3, (s, e) => TestExe()).Right + k(6);
             bBehav = Btn("Comportement : photo avant", t => t.Accent2, x3, y3, (s, e) => Behaviour());
-            stat = Lbl("", 0, k(196), "muted");
-            grid = new Grid(); grid.Location = new Point(0, k(218)); Controls.Add(grid);
+            // renforts défensifs (Sysinternals + durcissement)
+            int x4 = 0, y4 = k(196);
+            x4 = Btn("Sysmon", t => t.Accent, x4, y4, (s, e) => RunSysmon()).Right + k(6);
+            x4 = Btn("Autoruns (démarrage complet)", t => t.Accent, x4, y4, (s, e) => RunAutoruns()).Right + k(6);
+            Btn("Durcissement CIS / ANSSI", t => t.Ok, x4, y4, (s, e) => RunCis());
+            stat = Lbl("", 0, k(234), "muted");
+            grid = new Grid(); grid.Location = new Point(0, k(256)); Controls.Add(grid);
             box = new LogBox(); Controls.Add(box);
             grid.SelectedIndexChanged += (s, e) => { var f = grid.Sel as CyFinding; if (f == null) return; box.Clear(); box.Line("// " + f.Host + " · " + f.Item, "accent", true); box.Line(f.Title, f.Level == "ok" ? "ok" : f.Level == "info" ? "text" : f.Level); if (f.Fix.Length > 0) box.Line("→ " + f.Fix, "text"); if (f.Ref.Length > 0) box.Line("Réf. " + f.Ref, "muted"); };
             Resize += (s, e) =>
@@ -593,6 +598,7 @@ namespace AmiOps
 
         Client Cur() { return Store.D.Clients.FirstOrDefault(x => x.Name == client.SelectedItem as string); }
         void Ui(Action a) { try { if (IsHandleCreated) BeginInvoke(a); } catch { } }
+        bool AskUi(string q) { bool r = false; if (InvokeRequired) Invoke(new Action(() => r = CyberForm.Ask(this, q))); else r = CyberForm.Ask(this, q); return r; }
         void Out(string s, string c) { Ui(() => box.Line(s, c)); var j = Job.Current; if (j != null) j.Record(s, c); }
 
         void ShowScope()
@@ -658,6 +664,52 @@ namespace AmiOps
                 posteF.AddRange(f); posteInfo = Environment.MachineName + " · " + DateTime.Now.ToString("dd/MM/yyyy HH:mm");
                 j.Log(titles[what] + " : " + info + " · " + f.Count(x => x.Level == "bad") + " critique(s), " + f.Count(x => x.Level == "warn") + " à vérifier", f.Any(x => x.Level == "bad") ? "bad" : "ok");
                 Ui(() => Show(f, titles[what] + " : " + info));
+            }, Out);
+        }
+
+        // ---------------- renforts défensifs
+        void RunSysmon()
+        {
+            Jobs.Run("Sysmon · " + Environment.MachineName, null, j =>
+            {
+                if (!Sysmon.Installed())
+                {
+                    if (!AskUi("Sysmon (Microsoft Sysinternals) journalise finement les processus, connexions et persistance — bien plus que les journaux Windows de base.\n\nL'installer (winget) et appliquer la configuration de " + Ed.Name + " (processus, réseau, injection, accès à lsass, démarrage, clés Run) ?")) { j.Log("Installation annulée.", "muted"); return; }
+                    Sysmon.Install(true, j.Log);
+                    j.Log("Sysmon collecte à partir de maintenant : relance « Sysmon » plus tard pour voir les événements.", "muted"); return;
+                }
+                var o = Sh.Ps(Sysmon.ReadScript, 300000);
+                var f = Sysmon.Eval(o);
+                posteF.RemoveAll(x => x.Item.StartsWith("Sysmon")); posteF.AddRange(f);
+                posteInfo = Environment.MachineName + " · " + DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+                j.Log("Sysmon : " + f.Count(x => x.Level == "bad") + " critique(s), " + f.Count(x => x.Level == "warn") + " à vérifier (3 jours)", f.Any(x => x.Level == "bad") ? "bad" : "ok");
+                Ui(() => Show(f, "Sysmon — événements à risque (3 jours)"));
+            }, Out);
+        }
+
+        void RunAutoruns()
+        {
+            Jobs.Run("Autoruns · " + Environment.MachineName, null, j =>
+            {
+                var csv = Autoruns.Run(j.Log);
+                int total; var f = Autoruns.Eval(csv, out total);
+                posteF.RemoveAll(x => x.Item.StartsWith("Autoruns · ")); posteF.AddRange(f);
+                posteInfo = Environment.MachineName + " · " + DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+                j.Log("Autoruns : " + total + " entrées de démarrage · " + f.Count(x => x.Level == "bad") + " critique(s), " + f.Count(x => x.Level == "warn") + " à vérifier", f.Any(x => x.Level == "bad") ? "bad" : "ok");
+                Ui(() => Show(f, "Autoruns — " + total + " entrées de démarrage examinées"));
+            }, Out);
+        }
+
+        void RunCis()
+        {
+            Jobs.Run("Durcissement CIS/ANSSI · " + Environment.MachineName, null, j =>
+            {
+                var o = Sh.Ps(Cis.Script, 180000);
+                int score; var f = Cis.Eval(o, out score);
+                posteF.RemoveAll(x => x.Item.StartsWith("CIS · ")); posteF.AddRange(f);
+                posteInfo = Environment.MachineName + " · " + DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+                j.Log("Durcissement : " + score + "/100 conforme · " + f.Count(x => x.Level == "bad") + " critique(s), " + f.Count(x => x.Level == "warn") + " à corriger", score >= 80 ? "ok" : score >= 60 ? "warn" : "bad");
+                Ui(() => Show(f, "Durcissement CIS / ANSSI — " + score + "/100 conforme"));
             }, Out);
         }
 

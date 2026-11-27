@@ -25,7 +25,7 @@ echo "OK : AmiOps/build/TechITAB.exe"
 
 # PC Santé AB : sous-ensemble explicite (liste blanche) + symbole POSTE
 POSTE_SRC=()
-for f in AmiOps/src/*.cs; do case "$(basename "$f")" in Pages.cs|Parc.cs|CyberPage.cs|Labo.cs|Remote.cs|Secours.cs) ;; *) POSTE_SRC+=("$f");; esac; done
+for f in AmiOps/src/*.cs; do case "$(basename "$f")" in Pages.cs|Parc.cs|CyberPage.cs|Labo.cs|Remote.cs|Secours.cs|Defense.cs) ;; *) POSTE_SRC+=("$f");; esac; done
 POSTE_EXT=()
 for f in "$EXT"/*.cs; do case "$(basename "$f")" in DiagPoste_*|MaintenancePC_*|TestReseau_*|ScanParc_*|TriFichiers_*|MailCheck_*|netswitch_*|outils-vtx_*|powermenu_*|legacy_*) POSTE_EXT+=("$f");; esac; done
 mcs "${OPTS[@]}" -define:POSTE "${REFS[@]}" -win32icon:AmiOps/build/pcsante.ico -out:AmiOps/build/PCSanteAB.exe common/Cyber.cs "${POSTE_SRC[@]}" "${POSTE_EXT[@]}"

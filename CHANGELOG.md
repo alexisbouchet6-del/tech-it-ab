@@ -2,6 +2,18 @@
 
 Développé by alex.b
 
+## 1.7.0 — 27/11/2026
+
+### Renforts cyber (page Cyber, Tech IT AB)
+- Sysmon (Microsoft Sysinternals) : installation par winget + configuration de journalisation fine (processus, réseau, injection, accès lsass, Démarrage, clés Run) ; lecture des événements à fort signal des 3 derniers jours, classés MITRE ATT&CK (T1055 injection, T1003 vol d'identifiants LSASS, PowerShell encodé, persistance).
+- Autoruns : `autorunsc` (signatures + VirusTotal), remontée des entrées non signées, en dossier utilisateur, orphelines ou détectées par plusieurs moteurs.
+- Durcissement CIS Benchmark / ANSSI : audit de ~20 points de configuration avec note /100, références CIS et ANSSI et remédiation par point. Lecture seule (n'applique aucune modification).
+- Les constats s'ajoutent au rapport cyber du client. Outils Sysinternals installés depuis winget, jamais embarqués.
+
+### Tests
+- `tests/DefenseTests.cs` (T17) : 23 contrôles (découpe CSV Autoruns, évaluation du démarrage, durcissement CIS/ANSSI, mapping Sysmon), exécutés sous Mono et sur Windows en CI.
+- Contrôle d'isolation de PC Santé AB étendu aux types Sysmon / Autoruns / Cis.
+
 ## 1.6.0 — 26/11/2026
 
 ### Protection « sous mon nom » (anti-copie)

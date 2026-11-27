@@ -59,7 +59,7 @@ foreach ($d in 'netswitch', 'outils-vtx', 'powermenu') { foreach ($f in (Get-Chi
 $emb += Copy-Stripped $harden 'legacy'
 $src = (Get-ChildItem (Join-Path $suite 'AmiOps\src') -Filter *.cs).FullName
 Invoke-Csc 'TechITAB' (Join-Path $suite 'AmiOps\build\techitab.ico') (@($common) + $src + $emb) 'AmiOps.Program'
-$excl = 'Pages.cs', 'Parc.cs', 'CyberPage.cs', 'Labo.cs', 'Remote.cs', 'Secours.cs'
+$excl = 'Pages.cs', 'Parc.cs', 'CyberPage.cs', 'Labo.cs', 'Remote.cs', 'Secours.cs', 'Defense.cs'
 $posteSrc = $src | Where-Object { $excl -notcontains (Split-Path $_ -Leaf) }
 $posteEmb = $emb | Where-Object { (Split-Path $_ -Leaf) -match '^(DiagPoste|MaintenancePC|TestReseau|ScanParc|TriFichiers|MailCheck|netswitch|outils-vtx|powermenu|legacy)_' }
 Invoke-Csc 'PCSanteAB' (Join-Path $suite 'AmiOps\build\pcsante.ico') (@($common) + $posteSrc + $posteEmb) 'AmiOps.Program' 'POSTE'
@@ -72,6 +72,8 @@ if ($Tests) {
     $t16 = Join-Path $root 'tests\SupervTests.cs'
     Invoke-Csc 'T16-TechITAB' (Join-Path $suite 'AmiOps\build\techitab.ico') (@($common) + $src + $emb + $t16) 'AmiOps.T16' '' 'exe'
     Invoke-Csc 'T16-PCSanteAB' (Join-Path $suite 'AmiOps\build\pcsante.ico') (@($common) + $posteSrc + $posteEmb + $t16) 'AmiOps.T16' 'POSTE' 'exe'
+    $t17 = Join-Path $root 'tests\DefenseTests.cs'
+    Invoke-Csc 'T17-TechITAB' (Join-Path $suite 'AmiOps\build\techitab.ico') (@($common) + $src + $emb + $t17) 'AmiOps.T17' '' 'exe'
 }
 
 Copy-Item (Join-Path $Out 'TechITAB.exe') (Join-Path $Out 'TechITAB-portable.exe') -Force
