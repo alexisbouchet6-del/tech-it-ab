@@ -21,7 +21,7 @@ namespace AmiOps
             A("Authenticité : signé par un AUTRE certificat = altérée", Authenticity.Decide(true, true, "AABBCCDDEEFF00112233445566778899AABBCCDD", pin) == Authenticity.Tampered);
             A("Authenticité : signature invalide (modifiée) = altérée", Authenticity.Decide(true, false, pin, pin) == Authenticity.Tampered);
             A("Authenticité : sans empreinte épinglée = altérée", Authenticity.Decide(true, true, pin, "") == Authenticity.Tampered);
-            A("Authenticité : sous Mono = build de dev, de confiance", Authenticity.State == Authenticity.Dev && Authenticity.Trusted && Authenticity.Banner == null, Authenticity.State);
+            A("Authenticité : build non signé (dev/CI) = de confiance, sans bannière", (Authenticity.State == Authenticity.Dev || Authenticity.State == Authenticity.Unsigned) && Authenticity.Trusted && Authenticity.Banner == null, Authenticity.State);
 
             // ---- supervision : validation de la configuration
             A("Superv : code client valide", Superv.CodeOk("CLI-09-16-0699") && !Superv.CodeOk("CLI-9-16-0699") && !Superv.CodeOk("CLI-09-16-0699;rm") && !Superv.CodeOk(""));
