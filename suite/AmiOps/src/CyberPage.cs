@@ -573,7 +573,8 @@ namespace AmiOps
             int x4 = 0, y4 = k(196);
             x4 = Btn("Sysmon", t => t.Accent, x4, y4, (s, e) => RunSysmon()).Right + k(6);
             x4 = Btn("Autoruns (démarrage complet)", t => t.Accent, x4, y4, (s, e) => RunAutoruns()).Right + k(6);
-            Btn("Durcissement CIS / ANSSI", t => t.Ok, x4, y4, (s, e) => RunCis());
+            x4 = Btn("Durcissement CIS / ANSSI", t => t.Ok, x4, y4, (s, e) => RunCis()).Right + k(6);
+            Btn("Atelier labo (équipe violette)…", t => t.Accent2, x4, y4, (s, e) => { using (var d = new LabDialog()) d.ShowDialog(this); });
             stat = Lbl("", 0, k(234), "muted");
             grid = new Grid(); grid.Location = new Point(0, k(256)); Controls.Add(grid);
             box = new LogBox(); Controls.Add(box);

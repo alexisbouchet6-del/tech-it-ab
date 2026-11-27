@@ -55,6 +55,22 @@ NOUVEAU EN 1.1 - OUTILS TECHNIQUES
 Windows 11 : l'analyse Wi-Fi demande d'activer la localisation (Paramètres > Confidentialité > Localisation).
 VirusTotal : clé API gratuite à saisir une fois (stockée chiffrée DPAPI) ; seules les empreintes SHA-256 sont envoyées.
 
+NOUVEAU EN 1.8 - ATELIER LABO (équipe violette, page Cyber)
+
+Pour s'entraîner à la DÉTECTION sur ses propres machines de labo autorisées (RFC1918, HackTheBox, TryHackMe, Root-Me).
+Trois onglets :
+- Périmètre labo : on déclare un réseau PRIVÉ (adresse publique refusée) et on confirme que ce sont ses machines.
+  Sans ça, l'atelier reste désactivé. Journal d'audit (lab-audit.log).
+- Simulations (sûres) : rejoue des techniques MITRE ATT&CK INOFFENSIVES et auto-nettoyantes (clé Run vers la
+  calculatrice, PowerShell encodé qui affiche un texte, tâche planifiée vide, LOLBin certutil vers 127.0.0.1,
+  reconnaissance de comptes en lecture seule, fichier bénin dans le Démarrage) pour générer la télémétrie, qu'on
+  détecte ensuite avec Sysmon / Chasse aux menaces, puis qu'on remédie. Rien de destructeur, tout est nettoyé.
+- Catalogue Kali (guidé) : fiches des vraies attaques (Responder, NetExec, Hydra, Nmap vuln, Metasploit, Impacket)
+  avec la commande à lancer DEPUIS Kali sur le périmètre labo, la détection et la remédiation. L'application
+  n'exécute AUCUNE attaque réelle : elle donne la commande (bouton « Copier »), la détection et la correction.
+
+Offensif uniquement sur ses propres labos ou des plateformes autorisées. Jamais sur un tiers.
+
 NOUVEAU EN 1.7 - RENFORTS CYBER (page Cyber)
 
 - Sysmon (Microsoft Sysinternals) : installation par winget et configuration de journalisation fine écrite par alex.b

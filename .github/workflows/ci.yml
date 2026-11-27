@@ -38,7 +38,8 @@ jobs:
           ./out/T16-TechITAB.exe | Tee-Object -FilePath out/t16-techitab.txt; $c = $LASTEXITCODE
           ./out/T16-PCSanteAB.exe | Tee-Object -FilePath out/t16-pcsanteab.txt; $d = $LASTEXITCODE
           ./out/T17-TechITAB.exe | Tee-Object -FilePath out/t17-techitab.txt; $e = $LASTEXITCODE
-          if ($a -ne 0 -or $b -ne 0 -or $c -ne 0 -or $d -ne 0 -or $e -ne 0) { Write-Error "Tests KO — T15: $a/$b, T16: $c/$d, T17: $e"; exit 1 }
+          ./out/T18-TechITAB.exe | Tee-Object -FilePath out/t18-techitab.txt; $g = $LASTEXITCODE
+          if ($a -ne 0 -or $b -ne 0 -or $c -ne 0 -or $d -ne 0 -or $e -ne 0 -or $g -ne 0) { Write-Error "Tests KO — T15: $a/$b, T16: $c/$d, T17: $e, T18: $g"; exit 1 }
       - name: Autotest Tech IT AB (lecture seule)
         shell: pwsh
         run: ./build/selftest.ps1 -Exe out/TechITAB.exe
@@ -51,7 +52,7 @@ jobs:
         run: |
           $asm = [Reflection.Assembly]::LoadFile((Resolve-Path out/PCSanteAB.exe).Path)
           try { $types = $asm.GetTypes() } catch [Reflection.ReflectionTypeLoadException] { $types = $_.Exception.Types | Where-Object { $_ } }
-          $bad = 'Nmap','Scope','CyberPage','Glpi','Trmm','Multi','Vault','ParcPage','ClientsPage','SecoursPage','AdPage','Rescue','Phish','ScanWatch','Sysmon','Autoruns','Cis'
+          $bad = 'Nmap','Scope','CyberPage','Glpi','Trmm','Multi','Vault','ParcPage','ClientsPage','SecoursPage','AdPage','Rescue','Phish','ScanWatch','Sysmon','Autoruns','Cis','Lab','LabDialog'
           $found = $types | Where-Object { $_.Namespace -eq 'AmiOps' -and $bad -contains $_.Name }
           if ($found) { Write-Error ("Types sensibles présents : " + ($found.Name -join ', ')); exit 1 }
           'PC Santé AB : aucun type sensible.' 
@@ -73,6 +74,7 @@ jobs:
             out/t15-*.txt
             out/t16-*.txt
             out/t17-*.txt
+            out/t18-*.txt
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')

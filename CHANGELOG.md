@@ -2,6 +2,17 @@
 
 Développé by alex.b
 
+## 1.8.0 — 27/11/2026
+
+### Atelier labo (équipe violette, page Cyber, Tech IT AB)
+- Entraînement à la détection sur ses propres machines de labo autorisées, sur un périmètre **RFC1918 confirmé** (adresse publique refusée, confirmation « ce sont mes machines », journal d'audit).
+- Simulations : rejoue des techniques MITRE ATT&CK **inoffensives et auto-nettoyantes** (clé Run → calculatrice, PowerShell encodé, tâche planifiée vide, LOLBin certutil → 127.0.0.1, reconnaissance de comptes, fichier bénin au Démarrage) pour générer la télémétrie, détectée ensuite via Sysmon / Chasse aux menaces, puis remédiée.
+- Catalogue Kali guidé (Responder, NetExec, Hydra, Nmap vuln, Metasploit, Impacket) : commande à lancer depuis Kali sur le périmètre labo, détection et remédiation. **L'application n'exécute aucune attaque réelle.**
+
+### Tests
+- `tests/LabTests.cs` (T18) : 22 contrôles (périmètre RFC1918, cible injectée, simulations sans commande destructrice, intégrité du catalogue), sous Mono et en CI.
+- Isolation PC Santé AB étendue aux types Lab / LabDialog.
+
 ## 1.7.0 — 27/11/2026
 
 ### Renforts cyber (page Cyber, Tech IT AB)
