@@ -63,7 +63,7 @@ jobs:
           $r = @('./build','./suite/AmiOps/cle-secours') | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Error }
           $r | Format-Table -AutoSize
           if ($r) { exit 1 }
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: techitab-${{ github.sha }}
