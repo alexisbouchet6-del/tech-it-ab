@@ -60,7 +60,7 @@ jobs:
         shell: pwsh
         run: |
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
-          $r = Invoke-ScriptAnalyzer -Path ./build, ./suite/AmiOps/cle-secours -Recurse -Severity Error
+          $r = @('./build','./suite/AmiOps/cle-secours') | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Error }
           $r | Format-Table -AutoSize
           if ($r) { exit 1 }
       - uses: actions/upload-artifact@v6
