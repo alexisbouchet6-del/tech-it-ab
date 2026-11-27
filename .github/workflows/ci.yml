@@ -15,7 +15,7 @@ jobs:
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Recherche de secrets (gitleaks, commits poussés)
@@ -26,7 +26,7 @@ jobs:
   build-test:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Compilation (Roslyn) + bancs de tests
         shell: pwsh
         run: ./build/build.ps1 -Tests
@@ -83,7 +83,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Compilation
         shell: pwsh
         run: ./build/build.ps1
