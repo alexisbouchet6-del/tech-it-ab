@@ -68,6 +68,16 @@ namespace AmiOps
             // ---- garde-fou anti-copie : une copie non authentique ne remonte rien (simulé via la décision pure)
             A("Garde-fou : une copie altérée est bridée", !new[] { Authenticity.Unsigned, Authenticity.Tampered }.All(st => st == Authenticity.Authentic || st == Authenticity.Dev));
 
+            // ---- protection stricte (réglage) : non signé toléré avant signature, bridé une fois strict ; altéré toujours bridé
+            var fld = typeof(Authenticity).GetField("_state", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            fld.SetValue(null, Authenticity.Unsigned); Prefs.Ini.Set("AuthStrict", "0"); Prefs.Save();
+            A("Non signé toléré sans protection stricte (Cyber visible)", Authenticity.Trusted && Authenticity.Banner == null);
+            Prefs.Ini.Set("AuthStrict", "1"); Prefs.Save();
+            A("Non signé bridé avec protection stricte", !Authenticity.Trusted && Authenticity.Banner != null);
+            fld.SetValue(null, Authenticity.Tampered); Prefs.Ini.Set("AuthStrict", "0"); Prefs.Save();
+            A("Copie altérée bridée quel que soit le réglage", !Authenticity.Trusted);
+            fld.SetValue(null, null); Prefs.Ini.Remove("AuthStrict"); Prefs.Save();   // réinitialise (redevient Dev sous Mono)
+
             Console.WriteLine("T16 (" + Ed.Name + ") : " + ok + " OK / " + ko + " KO");
             Environment.Exit(ko);
         }

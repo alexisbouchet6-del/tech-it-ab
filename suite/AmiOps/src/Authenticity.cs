@@ -11,11 +11,17 @@ using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using AlexB;
 
 namespace AmiOps
 {
     static class Authenticity
     {
+        // protection stricte : exiger la signature. Tant que les releases ne sont pas signées (certificat pas encore
+        // en place), la laisser à false — une copie non signée fonctionne alors normalement. À activer après signature :
+        // une copie non signée devient bridée, en plus des copies altérées (toujours bridées, quel que soit ce réglage).
+        public static bool Strict { get { return Prefs.Ini.GetBool("AuthStrict", false); } }
+
         // états
         public const string Dev = "dev";             // build de développement (Mono) : jamais une copie distribuée
         public const string Authentic = "authentique"; // signée, valide, empreinte = alex.b
@@ -25,20 +31,28 @@ namespace AmiOps
         static string _state;
         public static string State { get { if (_state == null) _state = CheckSelf(); return _state; } }
 
-        // fonctions sensibles autorisées ? (authentique ou build de dev)
-        public static bool Trusted { get { return State == Authentic || State == Dev; } }
+        // fonctions sensibles autorisées ?
+        //  - authentique ou build de dev : toujours oui
+        //  - altérée (signée par un autre / modifiée) : toujours non
+        //  - non signée : oui, sauf si la protection stricte est activée (après mise en place de la signature)
+        public static bool Trusted
+        {
+            get
+            {
+                if (State == Authentic || State == Dev) return true;
+                if (State == Tampered) return false;
+                return !Strict;   // non signée : tolérée tant que la protection stricte n'est pas activée
+            }
+        }
 
-        // message de bandeau, ou null si tout va bien (authentique / dev)
+        // message de bandeau, ou null si rien à signaler
         public static string Banner
         {
             get
             {
-                switch (State)
-                {
-                    case Unsigned: return "⚠  Copie non signée — cette version n'est pas signée par alex.b. Supervision et outils sensibles désactivés. La version officielle signée débloque tout.";
-                    case Tampered: return "⛔  COPIE NON AUTORISÉE — cette application a été modifiée ou re-signée par un tiers. Ce n'est pas la version officielle d'alex.b. Supervision et outils sensibles désactivés.";
-                    default: return null;
-                }
+                if (State == Tampered) return "⛔  COPIE NON AUTORISÉE — cette application a été modifiée ou re-signée par un tiers. Ce n'est pas la version officielle d'alex.b. Supervision et outils sensibles désactivés.";
+                if (State == Unsigned && Strict) return "⚠  Copie non signée — protection stricte active : supervision et outils sensibles désactivés. La version officielle signée débloque tout.";
+                return null;   // non signée sans protection stricte : aucun bandeau (phase avant signature)
             }
         }
 

@@ -477,7 +477,9 @@ namespace AmiOps
             cLink.CheckedChanged += (s, e) => { try { TrayHost.LinkedConnections = cLink.Checked; CyberForm.Info(this, "Redémarre le PC pour appliquer."); } catch (Exception ex) { CyberForm.Warn(this, ex.Message); } };
             var cUpd = new CheckBox { Text = "Vérifier les mises à jour de " + Ed.Name + " une fois par jour", Checked = Prefs.Ini.GetBool("UpdateAuto", true), AutoSize = true, Location = new Point(k(560), k(128)) };
             cUpd.CheckedChanged += (s, e) => { Prefs.Ini.Set("UpdateAuto", cUpd.Checked); Prefs.Save(); };
-            Controls.AddRange(new Control[] { cTray, cAuto, cLink, cUpd });
+            var cStrict = new CheckBox { Text = "Protection stricte : exiger la signature (anti-copie) — à activer après la mise en place de ton certificat", Checked = Authenticity.Strict, AutoSize = true, Location = new Point(k(560), k(300)) };
+            cStrict.CheckedChanged += (s, e) => { Prefs.Ini.Set("AuthStrict", cStrict.Checked); Prefs.Save(); CyberForm.Info(this, cStrict.Checked ? "Protection stricte activée : une copie non signée sera bridée au prochain démarrage." : "Protection stricte désactivée : une copie non signée fonctionne. Une copie re-signée ou modifiée reste bridée."); };
+            Controls.AddRange(new Control[] { cTray, cAuto, cLink, cUpd, cStrict });
             Btn("▶ Autotest de " + Ed.Name + " (lecture seule)", t => t.Ok, k(560), k(160), (s, e) => Shell.RunSelfTest(), true);
 #if POSTE
             Btn("Supervision par mon prestataire…", t => t.Accent2, k(560), k(196), (s, e) => SupervDialog(), false);

@@ -2,6 +2,14 @@
 
 Développé by alex.b
 
+## 1.8.1 — 27/11/2026
+
+### Protection anti-copie : réglage « protection stricte »
+- Nouveau réglage `AuthStrict` (case « Protection stricte : exiger la signature » dans Paramètres), désactivé par défaut.
+- Tant qu'il est désactivé (avant la mise en place du certificat de signature), une copie **non signée** fonctionne normalement (onglet Cyber visible, supervision active) ; seule une copie **re-signée ou modifiée par un tiers** reste bridée.
+- À activer une fois les releases signées : une copie non signée redevient bridée. Prend effet au prochain démarrage.
+- Tests : SupervTests (T16) 22/22 (3 contrôles ajoutés pour ce réglage).
+
 ## 1.8.0 — 27/11/2026
 
 ### Atelier labo (équipe violette, page Cyber, Tech IT AB)
