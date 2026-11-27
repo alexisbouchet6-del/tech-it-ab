@@ -92,7 +92,7 @@ PROTECTION « SOUS MON NOM » (anti-copie)
 - Au démarrage, l'application vérifie sa propre signature : une copie modifiée, recompilée ou re-signée par un
   tiers (« on l'envoie à une IA et on rebrande ») passe en « copie non autorisée », avec un bandeau rouge, et les
   fonctions sensibles (Cyber, labo, supervision) sont désactivées.
-- Une copie officielle = signée par le certificat d'alex.b (empreinte 7C02F586…). Honnêteté : ça détecte et bride
+- Une copie officielle = signée par le certificat d'alex.b (empreinte E539400F…). Honnêteté : ça détecte et bride
   une copie trafiquée, ça ne rend pas le binaire impossible à modifier. La vraie protection, c'est la signature du
   certificat + le dépôt source privé (seul alex.b peut reconstruire une version signée).
 - Un exe non signé (version portable non signée) fonctionne en mode bridé jusqu'à sa signature.

@@ -17,7 +17,7 @@ namespace AmiOps
             // ---- authenticité : décision pure
             A("Authenticité : non signé", Authenticity.Decide(false, false, "", pin) == Authenticity.Unsigned);
             A("Authenticité : signé + valide + empreinte alex.b = authentique", Authenticity.Decide(true, true, pin, pin) == Authenticity.Authentic);
-            A("Authenticité : empreinte insensible aux espaces/casse", Authenticity.Decide(true, true, pin.ToLowerInvariant(), "7c02 f586 b652 e6c7 22e3 523b d861 70e5 564b 9d0a") == Authenticity.Authentic);
+            A("Authenticité : empreinte insensible aux espaces/casse", Authenticity.Decide(true, true, pin.ToLowerInvariant(), "e539 400f 3143 15c4 e844 b90c 952e d686 9206 dacd") == Authenticity.Authentic);
             A("Authenticité : signé par un AUTRE certificat = altérée", Authenticity.Decide(true, true, "AABBCCDDEEFF00112233445566778899AABBCCDD", pin) == Authenticity.Tampered);
             A("Authenticité : signature invalide (modifiée) = altérée", Authenticity.Decide(true, false, pin, pin) == Authenticity.Tampered);
             A("Authenticité : sans empreinte épinglée = altérée", Authenticity.Decide(true, true, pin, "") == Authenticity.Tampered);

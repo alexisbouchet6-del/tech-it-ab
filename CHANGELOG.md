@@ -2,6 +2,14 @@
 
 Développé by alex.b
 
+## 1.8.2 — 27/11/2026
+
+### Certificat de signature de code (empreinte épinglée)
+- Nouvelle empreinte épinglée `Ed.SignThumb` : `E539400F314315C4E844B90C952ED6869206DACD` (certificat de signature exportable d'alex.b), en remplacement de l'ancienne empreinte dont la clé privée n'était pas exportable et ne pouvait donc pas servir à signer les releases.
+- Mise à jour partout : `src/Edition.cs`, `LISEZMOI.txt`, `README.md` et le test T16.
+- Le workflow CI signe désormais les `.exe` avec ce certificat (secrets `SIGN_PFX_BASE64` + `SIGN_PFX_PASSWORD`). Une copie signée par ce certificat est reconnue « authentique » ; toute autre signature reste bridée.
+- Tests : SupervTests (T16) 19/19 sur les deux éditions sous Mono/Linux, dont le contrôle « empreinte insensible aux espaces/casse » recalé sur la nouvelle valeur (les contrôles d'authenticité restants, dépendants de WinVerifyTrust, s'exécutent et se comptent sous Windows en CI).
+
 ## 1.8.1 — 27/11/2026
 
 ### Protection anti-copie : réglage « protection stricte »
